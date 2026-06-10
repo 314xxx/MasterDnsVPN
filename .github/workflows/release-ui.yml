@@ -1,0 +1,44 @@
+name: Build and Release UI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: android-ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: android-ui
+        run: npm ci
+
+      - name: Build
+        working-directory: android-ui
+        run: npm run build
+
+      - name: Package dist
+        working-directory: android-ui
+        run: zip -r devpn-ui.zip dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android-ui/devpn-ui.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

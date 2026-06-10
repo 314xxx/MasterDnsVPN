@@ -1,41 +1,49 @@
 ## 1. 架构设计
 
-采用 WebView 混合应用架构：
-- Android Native 层：提供 WebView 容器、系统状态栏适配、返回键处理
-- Frontend 层：React + TypeScript + Tailwind CSS 构建 UI，打包后作为本地资源加载
+前端单页应用（SPA），使用 React + TypeScript + Tailwind CSS 构建。
+- 状态管理：Zustand
+- 路由：自定义 Tab 切换（主页 / 节点 / 设置）
+- 构建：Vite 打包为静态资源，可嵌入 WebView 或部署为 PWA
+- CI/CD：GitHub Actions 自动构建并发布 Release
 
 ## 2. 技术选型
 
 - **Frontend**: React@18 + TypeScript + Tailwind CSS + Vite
-- **State**: Zustand（管理连接状态、当前节点、分流模式）
-- **Routing**: 自定义 Tab 路由（首页/会员/我的）
-- **Android**: WebView 加载 `file:///android_asset/index.html`
+- **State**: Zustand（连接状态、节点数据、用户信息）
+- **Icons**: lucide-react
+- **Build**: Vite（输出到 `dist/`）
 
 ## 3. 路由定义
 
-| 路由/Tab | 用途 |
-|---------|------|
-| /home | 首页，连接控制、节点选择、分流模式 |
-| /vip | 会员页，套餐展示与购买 |
-| /profile | 我的页，用户信息与设置 |
+| Tab | 用途 |
+|-----|------|
+| home | 主页，点阵状态、信息卡片、连接按钮 |
+| nodes | 节点列表，搜索、测速、选择 |
+| settings | 设置页，关于、配置项 |
 
 ## 4. 状态管理
 
 ```typescript
+type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'failed';
+
 interface AppState {
-  isConnected: boolean;
-  currentNode: { name: string; code: string; flag: string };
-  splitMode: { name: string; desc: string };
-  vipExpired: boolean;
-  freeMinutes: number;
-  setConnected: (v: boolean) => void;
-  setNode: (node: AppState['currentNode']) => void;
-  setSplitMode: (mode: AppState['splitMode']) => void;
+  status: ConnectionStatus;
+  currentNode: Node;
+  nodes: Node[];
+  stats: { ip: string; latency: number; memory: number; cpu: number };
+  activeTab: 'home' | 'nodes' | 'settings';
+  connect: () => void;
+  disconnect: () => void;
+  selectNode: (node: Node) => void;
+  setActiveTab: (tab: 'home' | 'nodes' | 'settings') => void;
 }
 ```
 
-## 5. 构建流程
+## 5. 构建与发布流程
 
 1. Vite 构建前端资源到 `dist/` 目录
-2. 将 `dist/` 内容复制到 Android 项目 `app/src/main/assets/`
-3. Android Gradle 构建生成 APK
+2. GitHub Actions workflow:
+   - 触发条件：push tag `v*` 或手动触发
+   - 执行 `npm ci && npm run build`
+   - 将 `dist/` 目录打包为 `devpn-ui.zip`
+   - 创建 GitHub Release 并上传附件

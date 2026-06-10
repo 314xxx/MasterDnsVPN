@@ -1,87 +1,96 @@
 import { useStore } from '@/store';
-import { Gift, AlignJustify, Zap, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import DotMatrix from '@/components/DotMatrix';
+import StatusIcon from '@/components/StatusIcon';
+import { Power, MapPin, Activity, Cpu, HardDrive } from 'lucide-react';
 
 export default function Home() {
-  const { isConnected, currentNode, splitMode, vipExpired, freeMinutes, setConnected } = useStore();
+  const { status, currentNode, stats, connect, disconnect } = useStore();
+
+  const handleConnect = () => {
+    if (status === 'connected' || status === 'connecting') {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
+
+  const btnText = status === 'connected' ? '断开连接' : status === 'connecting' ? '连接中...' : '开始连接';
+  const btnColor = status === 'connected' ? 'bg-dvpn-red' : 'bg-dvpn-blue';
+  const btnDisabled = status === 'connecting';
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2 bg-white">
-        <div className="flex items-center gap-3">
-          <button className="p-1">
-            <Gift size={22} className="text-dvpn-text" />
-          </button>
-          <button className="p-1">
-            <AlignJustify size={22} className="text-dvpn-text" />
-          </button>
-        </div>
-        <h1 className="text-lg font-bold text-dvpn-text tracking-wide">DeVPN</h1>
-        <div className="flex items-center gap-1.5 min-w-[80px] justify-end">
-          <span className={`relative flex h-2.5 w-2.5`}>
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-dvpn-green' : 'bg-dvpn-red'}`}></span>
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isConnected ? 'bg-dvpn-green' : 'bg-dvpn-red'}`}></span>
-          </span>
-          <span className="text-sm text-dvpn-subtext">{isConnected ? '運行中' : '已停止'}</span>
+    <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
+      {/* Dot Matrix Status Area */}
+      <div className="relative mx-4 mt-3 rounded-3xl overflow-hidden bg-gradient-to-b from-white/40 to-white/10" style={{ height: '42vh', minHeight: 280 }}>
+        <DotMatrix status={status} />
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <StatusIcon status={status} />
+          <p className="mt-4 text-sm font-medium text-dvpn-subtext">
+            {status === 'idle' && '未连接'}
+            {status === 'connecting' && '正在连接...'}
+            {status === 'connected' && `已连接 · ${currentNode.name}`}
+            {status === 'failed' && '连接失败'}
+          </p>
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        {/* Banner */}
-        <div className="mx-4 mt-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-400 p-5 text-white text-center shadow-sm">
-          <p className="text-base font-medium">一次推廣，雙重收益</p>
-          <div className="flex justify-center mt-2 gap-1">
-            <span className="h-1.5 w-4 rounded-full bg-white/80"></span>
-            <span className="h-1.5 w-1.5 rounded-full bg-white/40"></span>
+      {/* Info Cards */}
+      <div className="mx-4 mt-4 grid grid-cols-2 gap-3">
+        {/* IP Card */}
+        <div className="liquid-glass rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-dvpn-subtext">
+            <MapPin size={14} />
+            <span className="text-xs">IP 地址</span>
           </div>
-        </div>
-
-        {/* Connection Status & Button */}
-        <div className="mx-4 mt-6 flex flex-col items-center">
-          <p className="text-sm text-dvpn-subtext mb-4">
-            {isConnected ? `免費流量生效中: ${freeMinutes} 分鐘` : (vipExpired ? '會員已過期' : '')}
+          <p className="text-sm font-semibold text-dvpn-text tracking-wide">
+            {stats.ip}
           </p>
-
-          <button
-            onClick={() => setConnected(!isConnected)}
-            className={`w-full py-4 rounded-2xl text-white font-semibold text-base flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
-              isConnected ? 'bg-dvpn-red' : 'bg-dvpn-blue'
-            }`}
-          >
-            <Zap size={20} fill="currentColor" />
-            {isConnected ? '斷開連接' : '快速連接'}
-          </button>
         </div>
 
-        {/* Cards */}
-        <div className="mx-4 mt-5 grid grid-cols-2 gap-3 pb-6">
-          {/* Node Card */}
-          <button className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform text-left">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{currentNode.flag}</span>
-              <div>
-                <p className="text-sm font-semibold text-dvpn-text">{currentNode.name}</p>
-                <p className="text-xs text-dvpn-subtext">{currentNode.code}</p>
-              </div>
-            </div>
-            <ChevronRight size={18} className="text-dvpn-subtext" />
-          </button>
-
-          {/* Split Mode Card */}
-          <button className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform text-left">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                <SlidersHorizontal size={16} className="text-dvpn-blue" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-dvpn-text">{splitMode.name}</p>
-                <p className="text-xs text-dvpn-subtext">{splitMode.desc}</p>
-              </div>
-            </div>
-            <ChevronRight size={18} className="text-dvpn-subtext" />
-          </button>
+        {/* Latency Card */}
+        <div className="liquid-glass rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-dvpn-subtext">
+            <Activity size={14} />
+            <span className="text-xs">延迟</span>
+          </div>
+          <p className="text-sm font-semibold text-dvpn-text">
+            {stats.latency > 0 ? `${stats.latency} ms` : '--'}
+          </p>
         </div>
+
+        {/* Memory Card */}
+        <div className="liquid-glass rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-dvpn-subtext">
+            <HardDrive size={14} />
+            <span className="text-xs">内存占用</span>
+          </div>
+          <p className="text-sm font-semibold text-dvpn-text">
+            {stats.memory > 0 ? `${stats.memory} MB` : '--'}
+          </p>
+        </div>
+
+        {/* CPU Card */}
+        <div className="liquid-glass rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-dvpn-subtext">
+            <Cpu size={14} />
+            <span className="text-xs">CPU 占用</span>
+          </div>
+          <p className="text-sm font-semibold text-dvpn-text">
+            {stats.cpu > 0 ? `${stats.cpu}%` : '--'}
+          </p>
+        </div>
+      </div>
+
+      {/* Connect Button */}
+      <div className="mx-4 mt-5 mb-6">
+        <button
+          onClick={handleConnect}
+          disabled={btnDisabled}
+          className={`w-full py-4 rounded-2xl text-white font-semibold text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-70 ${btnColor}`}
+        >
+          <Power size={20} />
+          {btnText}
+        </button>
       </div>
     </div>
   );

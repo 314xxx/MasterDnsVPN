@@ -13,12 +13,17 @@ export default {
           blue: '#007AFF',
           red: '#FF3B30',
           green: '#34C759',
-          bg: '#F2F2F7',
+          bg: '#F5F7FA',
+          bg2: '#E8ECF1',
           card: '#FFFFFF',
           text: '#1C1C1E',
           subtext: '#8E8E93',
           border: '#E5E5EA',
         }
+      },
+      animation: {
+        'spin-slow': 'spin 2s linear infinite',
+        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       }
     },
   },
