@@ -1,285 +1,285 @@
-﻿# MasterDnsVPN Project 🔐
+# MasterDnsVPN 项目 🔐
 
 ## | [نسخه فارسی](https://github.com/masterking32/MasterDnsVPN/blob/main/README_FA.MD) | [English Version](https://github.com/masterking32/MasterDnsVPN/blob/main/README.MD) | [Русская версия](https://github.com/masterking32/MasterDnsVPN/blob/main/README_RU.MD) |
 
-**MasterDnsVPN** is a scientific and research-oriented project for carrying TCP traffic through DNS queries and responses. In broad goal, it is similar to projects such as DNSTT or SlipStream, but it follows a fundamentally different structure and implementation approach.
-This system is designed around compatibility with many resolver behaviors and harsh network conditions, with the goal of preserving the highest possible stability and data delivery even in the worst cases.
+**MasterDnsVPN** 是一个科学研究和实验性质的项目，用于通过 DNS 查询和响应来承载 TCP 流量。从广义目标来看，它与 DNSTT 或 SlipStream 等项目类似，但采用了根本不同的结构和实现方式。
+该系统围绕与多种解析器行为的兼容性和恶劣网络条件而设计，目标是在最坏的情况下仍保持尽可能高的稳定性和数据传输能力。
 
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/masterking32/MasterDnsVPN) [![oosmetrics](https://api.oosmetrics.com/api/v1/badge/achievement/5c7b2ce0-0af6-4648-8ded-fd1e847096cd.svg)](https://oosmetrics.com/repo/masterking32/MasterDnsVPN)
 
 <a href="https://trendshift.io/repositories/23688" target="_blank"><img src="https://trendshift.io/api/badge/repositories/23688" alt="masterking32%2FMasterDnsVPN | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-### 📊 MasterDnsVPN Compared with Similar Projects
+### 📊 MasterDnsVPN 与类似项目的对比
 
-| Feature | SlipStream | DNSTT | MasterDnsVPN |
+| 特性 | SlipStream | DNSTT | MasterDnsVPN |
 | :--- | :--- | :--- | :--- |
-| Protocol type | Advanced DNS tunnel | Classic DNS tunnel | Advanced DNS tunnel / VPN |
-| Transport protocol | QUIC | KCP + Noise | Custom protocol + ARQ |
-| Transport header overhead | 🟠 ~24B | 🔴 ~59B | 🟢 ~5–7B<br>≈88% lower than DNSTT<br>≈71% lower than SlipStream |
-| Encryption style | TLS 1.3 (inside QUIC) | Noise (Curve25519) | AES / ChaCha20 / XOR (if XOR is used: lightweight with lower security and no extra overhead) |
-| Architecture | Unified (QUIC handles everything) | Multi-layered (KCP + SMUX + Noise) | 🟢 Lightweight custom design optimized for DNS |
-| Speed | 🟡 High (up to ~5× faster than DNSTT) | 🔴 Medium | 🟢 Faster than others<br>Up to ~9× faster than DNSTT<br>Up to ~3.6× faster than SlipStream |
-| Stability under packet loss | 🟡 Good | 🟠 Medium | 🟢 Very high (Multipath + ARQ) |
-| Multi-resolver support | Yes (multipath) | ❌ | Yes — advanced (multi-resolver + duplication) |
-| Resilience under heavy censorship | Good | Medium | Very strong (a core project goal) |
-| Setup complexity | Medium | Simple | Easier installation<br>More complex only if you heavily customize advanced settings |
-| SOCKS5 support | Yes | Yes | Optimized for SOCKS5 / SOCKS4 with reduced SOCKS overhead |
-| Shadowsocks support | ✅ | ❌ | Indirectly: TCP Forwarding mode can carry TCP-based protocols<br>e.g. Shadowsocks, VLESS/VMess, etc. |
-| Real multipath | Yes (QUIC multipath) | ❌ | Yes (multi-resolver + duplication) |
-| Adaptive routing | Limited | ❌ | Advanced (latency/loss based) |
-| Design goal | High speed and efficiency | Simplicity and stability | Surviving the harshest networks — stability, speed, and efficiency |
-| Implementation language | Rust | Go | Main version is Go<br>Legacy Python version also exists |
-| Built-in balancer | 🔴 | ❌ | 🟢 (8 built-in balancing modes) |
-| Duplication system | ❌ | ❌ | Yes — increases traffic to improve reliability (configurable or can be disabled) |
-| MTU tolerance | Better than DNSTT | - | Works even with very small MTU because protocol overhead is very low |
-| Failover system | ❌ | ❌ | ✅ |
-| Download speed 10MB (Local) | 🟡 0.978s | 🔴 2.492s | 🟢 0.270s |
-| Upload speed 10MB (Local) | 🟡 3.249s | 🔴 16.207s | 🟢 1.746s |
-| Resolver health checks and auto-disable | ❌ | ❌ | ✅ |
-| Background reactivation of healthy resolvers | ❌ | ❌ | ✅ |
-| Local DNS service on client (to reduce DNS hijacking) | ❌ | ❌ | ✅ (with strong DNS caching) |
-| DNS resolving through SOCKS5 | ❌ | ❌ | ✅ (with DNS caching) |
-| Fine-grained professional configuration | 🟠 | 🟠 | 🟢 Almost every subsystem is configurable |
-| No external helper software required | ❌ | ❌ | 🟢 No extra software is required; if needed, you can still combine it with SOCKS or tools such as Shadowsocks or OpenVPN |
+| 协议类型 | 高级 DNS 隧道 | 经典 DNS 隧道 | 高级 DNS 隧道 / VPN |
+| 传输协议 | QUIC | KCP + Noise | 自定义协议 + ARQ |
+| 传输头开销 | 🟠 ~24B | 🔴 ~59B | 🟢 ~5–7B<br>比 DNSTT 低约 88%<br>比 SlipStream 低约 71% |
+| 加密方式 | TLS 1.3 (在 QUIC 内部) | Noise (Curve25519) | AES / ChaCha20 / XOR (如果使用 XOR：轻量级，安全性较低，无额外开销) |
+| 架构 | 统一 (QUIC 处理一切) | 多层 (KCP + SMUX + Noise) | 🟢 为 DNS 优化的轻量级自定义设计 |
+| 速度 | 🟡 高 (比 DNSTT 快约 5 倍) | 🔴 中等 | 🟢 比其他项目更快<br>比 DNSTT 快约 9 倍<br>比 SlipStream 快约 3.6 倍 |
+| 丢包下的稳定性 | 🟡 良好 | 🟠 中等 | 🟢 非常高 (多路径 + ARQ) |
+| 多解析器支持 | 是 (多路径) | ❌ | 是 — 高级 (多解析器 + 重复发送) |
+| 重度审查下的韧性 | 良好 | 中等 | 非常强 (核心项目目标) |
+| 设置复杂度 | 中等 | 简单 | 安装更简单<br>只有在大量自定义高级设置时才会更复杂 |
+| SOCKS5 支持 | 是 | 是 | 针对 SOCKS5 / SOCKS4 优化，减少了 SOCKS 开销 |
+| Shadowsocks 支持 | ✅ | ❌ | 间接支持：TCP 转发模式可以承载基于 TCP 的协议<br>例如 Shadowsocks、VLESS/VMess 等 |
+| 真正的多路径 | 是 (QUIC 多路径) | ❌ | 是 (多解析器 + 重复发送) |
+| 自适应路由 | 有限 | ❌ | 高级 (基于延迟/丢包) |
+| 设计目标 | 高速和高效 | 简单和稳定 | 在最恶劣的网络中生存 — 稳定、速度和效率 |
+| 实现语言 | Rust | Go | 主版本为 Go<br>也存在旧版 Python 版本 |
+| 内置负载均衡器 | 🔴 | ❌ | 🟢 (8 种内置均衡模式) |
+| 重复发送系统 | ❌ | ❌ | 是 — 增加流量以提高可靠性 (可配置或禁用) |
+| MTU 容忍度 | 比 DNSTT 更好 | - | 即使 MTU 非常小也能工作，因为协议开销非常低 |
+| 故障转移系统 | ❌ | ❌ | ✅ |
+| 下载速度 10MB (本地) | 🟡 0.978秒 | 🔴 2.492秒 | 🟢 0.270秒 |
+| 上传速度 10MB (本地) | 🟡 3.249秒 | 🔴 16.207秒 | 🟢 1.746秒 |
+| 解析器健康检查和自动禁用 | ❌ | ❌ | ✅ |
+| 健康解析器的后台重新激活 | ❌ | ❌ | ✅ |
+| 客户端本地 DNS 服务 (减少 DNS 劫持) | ❌ | ❌ | ✅ (带强大的 DNS 缓存) |
+| 通过 SOCKS5 解析 DNS | ❌ | ❌ | ✅ (带 DNS 缓存) |
+| 细粒度的专业配置 | 🟠 | 🟠 | 🟢 几乎每个子系统都可配置 |
+| 无需外部辅助软件 | ❌ | ❌ | 🟢 不需要额外软件；如有需要，仍可与 SOCKS 或 Shadowsocks、OpenVPN 等工具结合使用 |
 
 ---
 
-### ❌ Disclaimer
+### ❌ 免责声明
 
-MasterDnsVPN is provided as an educational and research project only.
+MasterDnsVPN 仅作为教育和研究项目提供。
 
-- **Provided without warranty:** This software is provided “AS-IS”, without any express or implied warranty, including merchantability, fitness for a particular purpose, or non-infringement.
-- **Limitation of liability:** The developers and contributors of this project accept no responsibility for any direct, indirect, incidental, consequential, or other damages arising from the use of this software or the inability to use it.
-- **User responsibility:** Using this project outside test environments may disrupt or damage network behavior. The user alone is responsible for all consequences of installation, configuration, and use.
-- **Legal compliance:** Using this project to bypass local laws may result in civil or criminal consequences. Please review the laws and regulations of your country before use. The developers accept no responsibility for violations of local, national, or international laws by users.
-- **License terms:** Use, copying, distribution, or modification of this software is governed by the license in the `LICENSE` file of this repository. Any use outside those terms is prohibited.
-
----
-
-## Announcement and Support Channel 📢
-
-For the latest news, releases, and project updates, follow our Telegram channel: [Telegram Channel](https://t.me/masterdnsvpn)
+- **不提供担保：** 本软件按"原样"提供，不附带任何明示或暗示的担保，包括适销性、特定用途适用性或非侵权性。
+- **责任限制：** 本项目的开发者和贡献者对因使用或无法使用本软件而产生的任何直接、间接、附带、后果性或其他损害不承担责任。
+- **用户责任：** 在测试环境之外使用本项目可能会破坏或损坏网络行为。用户独自承担安装、配置和使用的所有后果。
+- **法律合规：** 使用本项目绕过当地法律可能会导致民事或刑事后果。使用前请查看您所在国家的法律法规。开发者对用户违反当地、国家或国际法律的行为不承担责任。
+- **许可条款：** 本软件的使用、复制、分发或修改受本仓库 `LICENSE` 文件中许可条款的约束。超出这些条款的任何使用均被禁止。
 
 ---
 
-### If you like this project, please support it by starring it on GitHub (⭐). It helps the project get discovered.
+## 公告和支持频道 📢
+
+获取最新新闻、版本发布和项目更新，请关注我们的 Telegram 频道：[Telegram 频道](https://t.me/masterdnsvpn)
 
 ---
 
-### Optional Financial Support 💸
+### 如果您喜欢这个项目，请在 GitHub 上给它加星 (⭐) 以支持它。这有助于项目被发现。
 
-- TON network:
+---
+
+### 可选的财务支持 💸
+
+- TON 网络：
 
 `masterking32.ton`
 
-- EVM-compatible networks (ETH and compatible chains):
+- EVM 兼容网络 (ETH 及兼容链)：
 
 `0x517f07305D6ED781A089322B6cD93d1461bF8652`
 
-- TRC20 network (TRON):
+- TRC20 网络 (TRON)：
 
 `TLApdY8APWkFHHoxebxGY8JhMeChiETqFH`
 
-Every contribution and every piece of feedback is appreciated. Support directly helps ongoing development and improvement.
+每一份贡献和每一条反馈都值得感谢。支持直接有助于持续的开发和改进。
 
 ---
 
-## Key Features and Advantages ✨
+## 主要特性和优势 ✨
 
-A brief overview of the main capabilities of MasterDnsVPN:
+MasterDnsVPN 主要功能的简要概述：
 
-- **Censorship resistance and harsh-network survivability:** 🛡️ Designed to work on filtered networks, unstable links, and strict MTU environments.
-- **Lightweight custom protocol:** 🔄 Uses a custom protocol with retransmission logic to reduce overhead and increase usable DNS payload.
-- **Multipath and packet duplication:** 📡 Sends traffic through multiple paths and supports selective duplication to increase delivery probability on unstable networks.
-- **Smart resolver selection and health checks:** ⚡ Selects resolvers based on quality and health, and manages problematic resolvers automatically.
-- **MTU discovery and synchronization:** 🧰 Detects the practical MTU of working paths and aligns around it to reduce fragmentation and improve stability.
-- **SOCKS5 / SOCKS4 support and optimization:** 🧦 Optimized local proxy handling for common applications.
-- **Packed control blocks and lower control overhead:** 📦 Groups ACK/control traffic together to reduce control chatter.
-- **Optional compression and request packing:** 🗜️ Reduces request counts and improves efficiency under small-MTU conditions.
-- **Flexible encryption:** 🔐 Supports multiple encryption methods to balance speed and security.
-- **Optional client-side local DNS and caching:** 📛 Can expose a local DNS service, reduce latency, and limit hijacking opportunities.
-- **Scalable resource control:** ⚙️ Can run on small servers or be tuned for heavier loads.
+- **抗审查和恶劣网络生存能力：** 🛡️ 专为在过滤网络、不稳定链路和严格 MTU 环境下工作而设计。
+- **轻量级自定义协议：** 🔄 使用带有重传逻辑的自定义协议来减少开销并增加可用 DNS 负载。
+- **多路径和数据包重复发送：** 📡 通过多条路径发送流量，并支持选择性重复发送以提高不稳定网络上的交付概率。
+- **智能解析器选择和健康检查：** ⚡ 根据质量和健康状况选择解析器，并自动管理有问题的解析器。
+- **MTU 发现和同步：** 🧰 检测工作路径的实际 MTU 并围绕其对齐，以减少碎片并提高稳定性。
+- **SOCKS5 / SOCKS4 支持和优化：** 🧦 针对常见应用程序优化本地代理处理。
+- **打包控制块和更低的控制开销：** 📦 将 ACK/控制流量分组在一起以减少控制 chatter。
+- **可选压缩和请求打包：** 🗜️ 在小 MTU 条件下减少请求数量并提高效率。
+- **灵活的加密：** 🔐 支持多种加密方法以平衡速度和安全性。
+- **可选的客户端本地 DNS 和缓存：** 📛 可以暴露本地 DNS 服务，减少延迟并限制劫持机会。
+- **可扩展的资源控制：** ⚙️ 可以在小型服务器上运行，也可以针对更重的负载进行调整。
 
-This list is only a high-level summary. The related sections below explain each area in more detail.
-
----
-
-## 🌐 Battle-Tested During a Total Internet Blackout
-
-MasterDnsVPN isn't just a theoretical project. It is battle-tested and proven to work in environments where the global internet is completely severed.
-
-Recently, during the 88-day internet blackout in Iran, authorities didn't just block VPNs or filter websites—they completely pulled the plug on international bandwidth. With 99% of the connection to the outside world physically cut off, users were trapped inside a closed, local intranet. 
-
-Standard circumvention tools are useless when there is no international internet to connect to. Yet, during this massive shutdown, MasterDnsVPN stood out as one of the very few lifelines that actually kept users connected to the global web.
-
-**How did it survive a total shutdown?**
-Instead of acting like a standard VPN, MasterDnsVPN relies on smart DNS tunneling techniques to pierce through the blackout:
-* **Multiple Resolvers:** It routes traffic through various DNS resolvers, ensuring the connection never relies on a single, easily blockable path.
-* **Encryption & Data Splitting:** It encrypts your data and breaks it down into tiny, scattered pieces.
-* **Disguised as Legitimate Traffic:** It wraps these data pieces inside standard, perfectly normal DNS queries.
-* **Bypassing Local Traps:** Because the traffic looks exactly like basic, everyday DNS requests, firewalls allow it through. The data gets resolved and reaches the outside world—even if the network forces you to use their own restricted, government-controlled local resolvers.
-
-This exact combination is what allowed MasterDnsVPN to maintain a stable connection when the outside world was completely blocked.
+此列表仅为高级摘要。下面的相关部分对每个领域进行了更详细的解释。
 
 ---
 
-# Setup and Getting Started 🧑‍💻
+## 🌐 在全面互联网 blackout 中经过实战测试
 
-## Section 1: 🖥️ Server Setup
+MasterDnsVPN 不仅仅是一个理论项目。它经过实战测试，并证明在全球互联网完全切断的环境中也能工作。
 
-### Section 1.1: 🌐 Domain Setup and Preparation (Prerequisite)
+最近，在伊朗 88 天的互联网 blackout 期间，当局不仅封锁了 VPN 或过滤了网站 — 他们完全切断了国际带宽。与外部世界 99% 的连接被物理切断，用户被困在一个封闭的本地内网中。
 
-To receive DNS requests directly on your server, you must delegate a subdomain to it. In short, create two records: one `A` record that points to your server IP, and one `NS` record that delegates the tunnel subdomain to that A record.
+当没有国际互联网可连接时，标准的规避工具毫无用处。然而，在这场大规模 shutdown 期间，MasterDnsVPN 脱颖而出，成为实际上让用户保持与全球网络连接的极少数生命线之一。
 
-#### Step 1.1.1: 🅰️ Create an A Record (Server Address)
+**它是如何在全面 shutdown 中生存的？**
+MasterDnsVPN 不像标准 VPN 那样运作，而是依靠智能 DNS 隧道技术穿透 blackout：
+* **多个解析器：** 它通过各种 DNS 解析器路由流量，确保连接从不依赖单一、易于封锁的路径。
+* **加密和数据拆分：** 它加密您的数据并将其分解成微小的、分散的片段。
+* **伪装成合法流量：** 它将这些数据片段包装在标准的、完全正常的 DNS 查询中。
+* **绕过本地陷阱：** 因为流量看起来完全像基本的日常 DNS 请求，防火墙允许它通过。数据被解析并到达外部世界 — 即使网络强迫您使用他们自己受限制的、政府控制的本地解析器。
 
-- **Type:** `A`
-- **Name:** a short name such as `ns`
-- **Value:** your server IPv4 address
-
-> Example: `ns.example.com -> 1.2.3.4`
-
-> Cloudflare note: if the domain uses Cloudflare, open the `DNS` page and click the cloud icon next to the `A` record so it becomes gray (`DNS only`). It must not remain proxied.
-
-#### Step 1.1.2: 🏷️ Create an NS Record (Delegate the Subdomain)
-
-- **Type:** `NS`
-- **Name:** the tunnel subdomain, for example `v`
-- **Value / Target:** `ns.example.com`
-
-> Example: `v.example.com -> ns.example.com`
-
-> Cloudflare note: add the `NS` record normally. Cloudflare does not proxy NS records, but make sure the `ns` A record is already set to `DNS only`.
-
-#### Section 1.1.3: 💡 A Short Note About MTU
-
-Shorter domain names leave more space for actual data inside each DNS request. For better throughput, keep names short. If you use Cloudflare, still keep the relevant records in `DNS only` mode.
+正是这种组合让 MasterDnsVPN 在外部世界完全被封锁时保持了稳定的连接。
 
 ---
 
-### Section 1.2: 🐧 Quick Linux Server Installation
+# 设置和入门 🧑‍💻
 
-#### Step 1.2.1: Automatic Installation (Script)
+## 第一节：🖥️ 服务器设置
 
-If you want to deploy the server on Linux, the easiest method is the automatic installer script. Run this command on the server:
+### 第一节.1：🌐 域名设置和准备 (先决条件)
+
+要直接在服务器上接收 DNS 请求，您必须将子域名委派给它。简而言之，创建两条记录：一条指向服务器 IP 的 `A` 记录，和一条将隧道子域名委派给该 A 记录的 `NS` 记录。
+
+#### 步骤 1.1.1：🅰️ 创建 A 记录 (服务器地址)
+
+- **类型：** `A`
+- **名称：** 一个短名称，例如 `ns`
+- **值：** 您的服务器 IPv4 地址
+
+> 示例：`ns.example.com -> 1.2.3.4`
+
+> Cloudflare 注意：如果域名使用 Cloudflare，打开 `DNS` 页面并点击 `A` 记录旁边的云图标使其变为灰色 (`仅 DNS`)。它不能保持代理状态。
+
+#### 步骤 1.1.2：🏷️ 创建 NS 记录 (委派子域名)
+
+- **类型：** `NS`
+- **名称：** 隧道子域名，例如 `v`
+- **值 / 目标：** `ns.example.com`
+
+> 示例：`v.example.com -> ns.example.com`
+
+> Cloudflare 注意：正常添加 `NS` 记录。Cloudflare 不代理 NS 记录，但请确保 `ns` A 记录已设置为 `仅 DNS`。
+
+#### 第一节.1.3：💡 关于 MTU 的简短说明
+
+较短的域名在每个 DNS 请求中留下更多空间用于实际数据。为了获得更好的吞吐量，请保持名称简短。如果您使用 Cloudflare，仍请将相关记录保持在 `仅 DNS` 模式。
+
+---
+
+### 第一节.2：🐧 快速 Linux 服务器安装
+
+#### 步骤 1.2.1：自动安装 (脚本)
+
+如果您想在 Linux 上部署服务器，最简单的方法是自动安装脚本。在服务器上运行此命令：
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/masterking32/MasterDnsVPN/main/server_linux_install.sh)
 ```
 
-The script handles installation and configuration automatically. When it finishes, the server starts and the **encryption key** is shown in the terminal log and also written to `encrypt_key.txt` next to the executable. Keep this key safe.
+该脚本自动处理安装和配置。完成后，服务器启动，**加密密钥** 会显示在终端日志中，并写入到可执行文件旁边的 `encrypt_key.txt` 中。请妥善保管此密钥。
 
-#### Step 1.2.2: Important Notes After Installation
+#### 步骤 1.2.2：安装后的重要注意事项
 
-- During installation, you will be asked for a domain. It must be the same delegated subdomain you configured in the `NS` record, for example `v.example.com`.
-- After creating DNS records, wait for propagation. This may take from a few minutes to several hours, and in some cases up to 48 hours depending on TTL and the DNS provider.
-- To verify the DNS setup, you can use tools such as `dig` or `nslookup`, for example `dig v.example.com NS` or `nslookup -type=ns v.example.com`. For a direct query to the new nameserver: `dig @ns.example.com v.example.com A`.
-- If the server firewall is enabled, allow UDP port 53. Example for `ufw`:
+- 安装期间，系统会要求您输入域名。它必须与您在 `NS` 记录中配置的委派子域名相同，例如 `v.example.com`。
+- 创建 DNS 记录后，等待传播。这可能需要几分钟到几小时，在某些情况下根据 TTL 和 DNS 提供商的不同可能需要长达 48 小时。
+- 要验证 DNS 设置，您可以使用 `dig` 或 `nslookup` 等工具，例如 `dig v.example.com NS` 或 `nslookup -type=ns v.example.com`。要直接查询新的名称服务器：`dig @ns.example.com v.example.com A`。
+- 如果服务器防火墙已启用，请允许 UDP 端口 53。`ufw` 的示例：
 
 ```bash
 sudo ufw allow 53/udp
 sudo ufw reload
 ```
 
-For `firewalld`:
+对于 `firewalld`：
 
 ```bash
 sudo firewall-cmd --add-port=53/udp --permanent
 sudo firewall-cmd --reload
 ```
 
-- If port `53` is already occupied by another service, such as `systemd-resolved`, see the troubleshooting section “Fixing Port 53 Already in Use”.
-- The encryption key (`encrypt_key.txt`) is shown after installation. Copy it and store it safely because the client needs it to connect.
+- 如果端口 `53` 已被其他服务占用，例如 `systemd-resolved`，请参阅故障排除部分"修复端口 53 已被占用"。
+- 加密密钥 (`encrypt_key.txt`) 在安装后显示。复制并安全存储它，因为客户端需要它来连接。
 
 ---
 
-## Section 2: 🚀 Installation and Launch (Client and Server)
+## 第二节：🚀 安装和启动 (客户端和服务器)
 
-You can install and run this project in two ways:
+您可以通过两种方式安装和运行此项目：
 
-1. Use the prebuilt binaries (recommended for most users)
-2. Run directly from source with **Go** (recommended for developers)
+1. 使用预构建的二进制文件 (推荐给大多数用户)
+2. 直接从 **Go** 源码运行 (推荐给开发者)
 
 ---
 
-### Section 2.1: Use Prebuilt Releases (✅ Recommended)
+### 第二节.1：使用预构建版本 (✅ 推荐)
 
-For convenience, prebuilt client and server binaries are published in the release page. Download the correct archive for your operating system and extract it.
+为方便起见，预构建的客户端和服务器二进制文件发布在发布页面。下载适合您操作系统的压缩包并解压。
 
-> 💡 **Note:** Release archives usually include the binary plus sample configuration files.
+> 💡 **注意：** 发布压缩包通常包含二进制文件和示例配置文件。
 
-#### Client Download Links 📥
+#### 客户端下载链接 📥
 
-| Operating System | Architecture | Suitable For | Direct Download |
+| 操作系统 | 架构 | 适用于 | 直接下载 |
 | :--- | :--- | :--- | :--- |
-| Windows 🪟 | `AMD64` (64-bit) | Windows 10 and 11 | [Download Windows Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_AMD64.zip) |
-| Windows 🪟 | `x86` (32-bit) | Older 32-bit Windows systems | [Download Windows x86 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_X86.zip) |
-| Windows 🪟 | `ARM64` | Windows on ARM devices | [Download Windows ARM64 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_ARM64.zip) |
-| macOS 🍎 | `ARM64` | Apple Silicon Macs (M1 / M2 / M3) | [Download macOS Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_MacOS_ARM64.zip) |
-| macOS 🍎 | `AMD64` | Intel Macs | [Download macOS Intel Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_MacOS_AMD64.zip) |
-| Linux 🐧 | `AMD64` (64-bit) | Modern distributions (Ubuntu 22.04+, Debian 12+) | [Download Linux Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_AMD64.zip) |
-| Linux 🐧 | `x86` (32-bit) | Older 32-bit Linux systems | [Download Linux x86 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_X86.zip) |
-| Linux (Legacy) 🐧 | `AMD64` (64-bit) | Older distributions (Ubuntu 20.04, Debian 11) | [Download Linux Legacy Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux-Legacy_AMD64.zip) |
-| Linux (Legacy) 🐧 | `ARM64` | Older ARM64 Linux systems that need broader compatibility | [Download Linux Legacy ARM64 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux-Legacy_ARM64.zip) |
-| Linux (ARM) 🐧 | `ARM64` | ARM servers, Raspberry Pi, and similar boards | [Download Linux ARM Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARM64.zip) |
-| Linux (ARM) 🐧 | `ARMv7` | 32-bit ARM boards and older embedded Linux devices | [Download Linux ARMv7 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV7.zip) |
-| Linux (ARM) 🐧 | `ARMv6` | Older ARM boards and lightweight Linux devices | [Download Linux ARMv6 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV6.zip) |
-| Linux (ARM) 🐧 | `ARMv5` | Very old ARM devices and embedded Linux systems | [Download Linux ARMv5 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV5.zip) |
-| Linux 🐧 | `RISCV64` | RISC-V Linux boards and servers | [Download Linux RISCV64 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_RISCV64.zip) |
-| Linux (MIPS) 🐧 | `MIPS` | Big-endian MIPS Linux and router platforms | [Download Linux MIPS Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS.zip) |
-| Linux (MIPS) 🐧 | `MIPSLE` | Little-endian MIPS Linux and router platforms | [Download Linux MIPSLE Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPSLE.zip) |
-| Linux (MIPS) 🐧 | `MIPS64` | 64-bit big-endian MIPS Linux systems | [Download Linux MIPS64 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS64.zip) |
-| Linux (MIPS) 🐧 | `MIPS64LE` | 64-bit little-endian MIPS Linux systems | [Download Linux MIPS64LE Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS64LE.zip) |
-| Termux / Android 📱 | `ARM64` | Modern Android phones running Termux | [Download Termux ARM64 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Termux_ARM64.zip) |
-| Termux / Android 📱 | `ARMv7` | Older Android phones running 32-bit Termux environments | [Download Termux ARMv7 Client ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Termux_ARMV7.zip) |
+| Windows 🪟 | `AMD64` (64位) | Windows 10 和 11 | [下载 Windows 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_AMD64.zip) |
+| Windows 🪟 | `x86` (32位) | 旧版 32 位 Windows 系统 | [下载 Windows x86 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_X86.zip) |
+| Windows 🪟 | `ARM64` | ARM 设备上的 Windows | [下载 Windows ARM64 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Windows_ARM64.zip) |
+| macOS 🍎 | `ARM64` | Apple Silicon Mac (M1 / M2 / M3) | [下载 macOS 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_MacOS_ARM64.zip) |
+| macOS 🍎 | `AMD64` | Intel Mac | [下载 macOS Intel 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_MacOS_AMD64.zip) |
+| Linux 🐧 | `AMD64` (64位) | 现代发行版 (Ubuntu 22.04+, Debian 12+) | [下载 Linux 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_AMD64.zip) |
+| Linux 🐧 | `x86` (32位) | 旧版 32 位 Linux 系统 | [下载 Linux x86 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_X86.zip) |
+| Linux (旧版) 🐧 | `AMD64` (64位) | 旧版发行版 (Ubuntu 20.04, Debian 11) | [下载 Linux 旧版客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux-Legacy_AMD64.zip) |
+| Linux (旧版) 🐧 | `ARM64` | 需要更广泛兼容性的旧版 ARM64 Linux 系统 | [下载 Linux 旧版 ARM64 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux-Legacy_ARM64.zip) |
+| Linux (ARM) 🐧 | `ARM64` | ARM 服务器、Raspberry Pi 和类似板卡 | [下载 Linux ARM 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARM64.zip) |
+| Linux (ARM) 🐧 | `ARMv7` | 32 位 ARM 板卡和旧版嵌入式 Linux 设备 | [下载 Linux ARMv7 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV7.zip) |
+| Linux (ARM) 🐧 | `ARMv6` | 旧版 ARM 板卡和轻量级 Linux 设备 | [下载 Linux ARMv6 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV6.zip) |
+| Linux (ARM) 🐧 | `ARMv5` | 非常旧的 ARM 设备和嵌入式 Linux 系统 | [下载 Linux ARMv5 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_ARMV5.zip) |
+| Linux 🐧 | `RISCV64` | RISC-V Linux 板卡和服务器 | [下载 Linux RISCV64 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_RISCV64.zip) |
+| Linux (MIPS) 🐧 | `MIPS` | 大端 MIPS Linux 和路由器平台 | [下载 Linux MIPS 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS.zip) |
+| Linux (MIPS) 🐧 | `MIPSLE` | 小端 MIPS Linux 和路由器平台 | [下载 Linux MIPSLE 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPSLE.zip) |
+| Linux (MIPS) 🐧 | `MIPS64` | 64 位大端 MIPS Linux 系统 | [下载 Linux MIPS64 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS64.zip) |
+| Linux (MIPS) 🐧 | `MIPS64LE` | 64 位小端 MIPS Linux 系统 | [下载 Linux MIPS64LE 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Linux_MIPS64LE.zip) |
+| Termux / Android 📱 | `ARM64` | 运行 Termux 的现代 Android 手机 | [下载 Termux ARM64 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Termux_ARM64.zip) |
+| Termux / Android 📱 | `ARMv7` | 运行 32 位 Termux 环境的旧版 Android 手机 | [下载 Termux ARMv7 客户端 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Client_Termux_ARMV7.zip) |
 
-#### Server Download Links 📤
+#### 服务器下载链接 📤
 
-*(Use these if you do not want the automated Linux installer.)*
+*(如果您不想使用自动 Linux 安装程序，请使用这些。)*
 
-| Operating System | Architecture | Suitable For | Direct Download |
+| 操作系统 | 架构 | 适用于 | 直接下载 |
 | :--- | :--- | :--- | :--- |
-| Windows 🪟 | `AMD64` (64-bit) | Windows Server, Windows 10 and 11 | [Download Windows Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_AMD64.zip) |
-| Windows 🪟 | `x86` (32-bit) | Older 32-bit Windows systems | [Download Windows x86 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_X86.zip) |
-| Windows 🪟 | `ARM64` | Windows on ARM devices | [Download Windows ARM64 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_ARM64.zip) |
-| Linux 🐧 | `AMD64` (64-bit) | Ubuntu 22.04+, Debian 12+ servers | [Download Linux Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_AMD64.zip) |
-| Linux 🐧 | `x86` (32-bit) | Older 32-bit Linux systems | [Download Linux x86 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_X86.zip) |
-| Linux (Legacy) 🐧 | `AMD64` (64-bit) | Older servers (Ubuntu 20.04, Debian 11) | [Download Linux Legacy Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux-Legacy_AMD64.zip) |
-| Linux (Legacy) 🐧 | `ARM64` | Older ARM64 Linux systems that need broader compatibility | [Download Linux Legacy ARM64 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux-Legacy_ARM64.zip) |
-| Linux (ARM) 🐧 | `ARM64` | ARM servers | [Download Linux ARM Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARM64.zip) |
-| Linux (ARM) 🐧 | `ARMv7` | 32-bit ARM servers and embedded Linux devices | [Download Linux ARMv7 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV7.zip) |
-| Linux (ARM) 🐧 | `ARMv6` | Older ARM boards and lightweight Linux devices | [Download Linux ARMv6 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV6.zip) |
-| Linux (ARM) 🐧 | `ARMv5` | Very old ARM devices and embedded Linux systems | [Download Linux ARMv5 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV5.zip) |
-| Linux 🐧 | `RISCV64` | RISC-V Linux boards and servers | [Download Linux RISCV64 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_RISCV64.zip) |
-| Linux (MIPS) 🐧 | `MIPS` | Big-endian MIPS Linux and router platforms | [Download Linux MIPS Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS.zip) |
-| Linux (MIPS) 🐧 | `MIPSLE` | Little-endian MIPS Linux and router platforms | [Download Linux MIPSLE Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPSLE.zip) |
-| Linux (MIPS) 🐧 | `MIPS64` | 64-bit big-endian MIPS Linux systems | [Download Linux MIPS64 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS64.zip) |
-| Linux (MIPS) 🐧 | `MIPS64LE` | 64-bit little-endian MIPS Linux systems | [Download Linux MIPS64LE Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS64LE.zip) |
-| macOS 🍎 | `ARM64` | Apple Silicon Macs | [Download macOS Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_MacOS_ARM64.zip) |
-| macOS 🍎 | `AMD64` | Intel Macs | [Download macOS Intel Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_MacOS_AMD64.zip) |
-| Termux / Android 📱 | `ARM64` | Modern Android / Termux environments | [Download Termux ARM64 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Termux_ARM64.zip) |
-| Termux / Android 📱 | `ARMv7` | Older Android / 32-bit Termux environments | [Download Termux ARMv7 Server ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Termux_ARMV7.zip) |
+| Windows 🪟 | `AMD64` (64位) | Windows Server, Windows 10 和 11 | [下载 Windows 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_AMD64.zip) |
+| Windows 🪟 | `x86` (32位) | 旧版 32 位 Windows 系统 | [下载 Windows x86 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_X86.zip) |
+| Windows 🪟 | `ARM64` | ARM 设备上的 Windows | [下载 Windows ARM64 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Windows_ARM64.zip) |
+| Linux 🐧 | `AMD64` (64位) | Ubuntu 22.04+, Debian 12+ 服务器 | [下载 Linux 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_AMD64.zip) |
+| Linux 🐧 | `x86` (32位) | 旧版 32 位 Linux 系统 | [下载 Linux x86 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_X86.zip) |
+| Linux (旧版) 🐧 | `AMD64` (64位) | 旧版服务器 (Ubuntu 20.04, Debian 11) | [下载 Linux 旧版服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux-Legacy_AMD64.zip) |
+| Linux (旧版) 🐧 | `ARM64` | 需要更广泛兼容性的旧版 ARM64 Linux 系统 | [下载 Linux 旧版 ARM64 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux-Legacy_ARM64.zip) |
+| Linux (ARM) 🐧 | `ARM64` | ARM 服务器 | [下载 Linux ARM 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARM64.zip) |
+| Linux (ARM) 🐧 | `ARMv7` | 32 位 ARM 服务器和嵌入式 Linux 设备 | [下载 Linux ARMv7 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV7.zip) |
+| Linux (ARM) 🐧 | `ARMv6` | 旧版 ARM 板卡和轻量级 Linux 设备 | [下载 Linux ARMv6 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV6.zip) |
+| Linux (ARM) 🐧 | `ARMv5` | 非常旧的 ARM 设备和嵌入式 Linux 系统 | [下载 Linux ARMv5 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_ARMV5.zip) |
+| Linux 🐧 | `RISCV64` | RISC-V Linux 板卡和服务器 | [下载 Linux RISCV64 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_RISCV64.zip) |
+| Linux (MIPS) 🐧 | `MIPS` | 大端 MIPS Linux 和路由器平台 | [下载 Linux MIPS 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS.zip) |
+| Linux (MIPS) 🐧 | `MIPSLE` | 小端 MIPS Linux 和路由器平台 | [下载 Linux MIPSLE 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPSLE.zip) |
+| Linux (MIPS) 🐧 | `MIPS64` | 64 位大端 MIPS Linux 系统 | [下载 Linux MIPS64 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS64.zip) |
+| Linux (MIPS) 🐧 | `MIPS64LE` | 64 位小端 MIPS Linux 系统 | [下载 Linux MIPS64LE 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Linux_MIPS64LE.zip) |
+| macOS 🍎 | `ARM64` | Apple Silicon Mac | [下载 macOS 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_MacOS_ARM64.zip) |
+| macOS 🍎 | `AMD64` | Intel Mac | [下载 macOS Intel 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_MacOS_AMD64.zip) |
+| Termux / Android 📱 | `ARM64` | 现代 Android / Termux 环境 | [下载 Termux ARM64 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Termux_ARM64.zip) |
+| Termux / Android 📱 | `ARMv7` | 旧版 Android / 32 位 Termux 环境 | [下载 Termux ARMv7 服务器 ⬇️](https://github.com/masterking32/MasterDnsVPN/releases/latest/download/MasterDnsVPN_Server_Termux_ARMV7.zip) |
 
 ---
 
-### Section 2.2: 📦 MasterDnsVPN Docker Image
+### 第二节.2：📦 MasterDnsVPN Docker 镜像
 
 ---
 
-#### Section 2.2.1: ⚠️ Overview
+#### 第二节.2.1：⚠️ 概述
 
-This Docker image runs the MasterDnsVPN server in a containerized environment and supports multi-architecture builds.
+此 Docker 镜像在容器化环境中运行 MasterDnsVPN 服务器，并支持多架构构建。
 
-It automatically:
+它会自动：
 
-* Boots a default configuration if none exists
-* Injects your domain on first startup
-* Stores persistent data in `/data`
+* 如果没有配置则启动默认配置
+* 在首次启动时注入您的域名
+* 将持久化数据存储在 `/data` 中
 
 ---
 
-#### Section 2.2.2: 🖥 Supported Architectures
+#### 第二节.2.2：🖥 支持的架构
 
 * linux/amd64
 * linux/arm/v5
@@ -289,9 +289,9 @@ It automatically:
 
 ---
 
-#### Section 2.2.3: 🚀 Quick Start
+#### 第二节.2.3：🚀 快速开始
 
-Run the container with Docker:
+使用 Docker 运行容器：
 
 ```bash
 docker run -d \
@@ -306,7 +306,7 @@ docker run -d \
 
 ---
 
-#### Section 2.2.4: 🧪 Example with docker-compose
+#### 第二节.2.4：🧪 docker-compose 示例
 
 ```yaml
 services:
@@ -324,24 +324,24 @@ services:
 
 ---
 
-#### Section 2.2.5: ⚙️ Required Environment Variables
+#### 第二节.2.5：⚙️ 必需的环境变量
 
-| Variable | Description                             |
+| 变量 | 说明                             |
 | -------- | --------------------------------------- |
-| DOMAIN   | Your DNS domain (required on first run) |
+| DOMAIN   | 您的 DNS 域名 (首次运行时需要) |
 
-> ⚠️ If `DOMAIN` is not set on first boot, the container will stop with an error.
+> ⚠️ 如果首次启动时未设置 `DOMAIN`，容器将报错停止。
 
 ---
 
-#### Section 2.2.6: 📁 Persistent Data
+#### 第二节.2.6：📁 持久化数据
 
-Stored in `/data`:
+存储在 `/data` 中：
 
 * `server_config.toml`
 * `encrypt_key.txt`
 
-You can mount it as volume:
+您可以将其挂载为卷：
 
 ```bash
 -v ./data:/data
@@ -349,15 +349,15 @@ You can mount it as volume:
 
 ---
 
-#### Section 2.2.7: 🔧 MikroTik / RouterOS Usage
+#### 第二节.2.7：🔧 MikroTik / RouterOS 使用
 
-For MikroTik containers:
+对于 MikroTik 容器：
 
-* Use latest v7 MikroTik RouterOS
-* Destination NAT port UDP/TCP 53 to your container
-* Full MikroTik container setup: https://help.mikrotik.com/docs/spaces/ROS/pages/84901929/Container
+* 使用最新的 v7 MikroTik RouterOS
+* 将 UDP/TCP 53 端口目标 NAT 到您的容器
+* 完整的 MikroTik 容器设置：https://help.mikrotik.com/docs/spaces/ROS/pages/84901929/Container
 
-Example:
+示例：
 
 ```bash
 /container mounts
@@ -371,56 +371,56 @@ add key=DOMAIN list=MasterDnsVPN value=v.example.com
 
 ---
 
-#### Section 2.2.8: 📌 Notes
+#### 第二节.2.8：📌 注意事项
 
-* DNS port `53` is required (UDP/TCP)
-* Do NOT run another DNS service on the same host
-* Designed for production use but still lightweight
-* No systemd or host modifications required
-
----
-
-### Section 2.3: 🪟 Preparing and Running the Client on Windows
-
-- After downloading the Windows package, extract it.
-- Open `client_config.toml` with a text editor such as Notepad.
-- Replace the default values with your real domain, encryption key, and resolver list.
-- Run the client executable.
-- Configure your browser or app to use the local SOCKS5 proxy at `127.0.0.1:18000` unless you changed the defaults.
+* DNS 端口 `53` 是必需的 (UDP/TCP)
+* 不要在同一主机上运行另一个 DNS 服务
+* 专为生产使用而设计，但仍然轻量级
+* 不需要 systemd 或主机修改
 
 ---
 
-### Section 2.4: 🐧 Preparing and Running on Linux / macOS
+### 第二节.3：🪟 在 Windows 上准备和运行客户端
 
-After downloading the package on Linux:
+- 下载 Windows 压缩包后，解压它。
+- 使用记事本等文本编辑器打开 `client_config.toml`。
+- 将默认值替换为您的真实域名、加密密钥和解析器列表。
+- 运行客户端可执行文件。
+- 将您的浏览器或应用程序配置为使用本地 SOCKS5 代理 `127.0.0.1:18000`，除非您更改了默认值。
+
+---
+
+### 第二节.4：🐧 在 Linux / macOS 上准备和运行
+
+在 Linux 上下载压缩包后：
 
 ```bash
 sudo apt update
 sudo apt install unzip nano
 ```
 
-Extract the archive:
+解压压缩包：
 
 ```bash
 unzip MasterDnsVPN_Client_Linux_AMD64.zip
 ls
 ```
 
-Give execute permission if needed:
+如有需要，赋予执行权限：
 
 ```bash
 chmod +x MasterDnsVPN_Client_Linux_AMD64
 chmod +x MasterDnsVPN_Server_Linux_AMD64
 ```
 
-Edit the configuration:
+编辑配置：
 
 ```bash
 nano client_config.toml
 nano server_config.toml
 ```
 
-Then run:
+然后运行：
 
 ```bash
 ./MasterDnsVPN_Client_Linux_AMD64
@@ -429,15 +429,15 @@ Then run:
 
 ---
 
-### Section 2.5: 🧑‍💻 Run Directly from Source (Go)
+### 第二节.5：🧑‍💻 直接从源码运行 (Go)
 
-> ⚠️ This section is intended for developers or users who want to run the current Go source directly.
+> ⚠️ 本节面向希望直接运行当前 Go 源码的开发者或用户。
 
-#### Prerequisite
+#### 先决条件
 
-- Go `1.24` or newer
+- Go `1.24` 或更新版本
 
-#### Build from source
+#### 从源码构建
 
 ```bash
 git clone https://github.com/masterking32/MasterDnsVPN.git
@@ -447,7 +447,7 @@ go build -o masterdnsvpn-client ./cmd/client
 go build -o masterdnsvpn-server ./cmd/server
 ```
 
-On Windows:
+在 Windows 上：
 
 ```powershell
 git clone https://github.com/masterking32/MasterDnsVPN.git
@@ -457,9 +457,9 @@ go build -o masterdnsvpn-client.exe .\cmd\client
 go build -o masterdnsvpn-server.exe .\cmd\server
 ```
 
-#### Create config files
+#### 创建配置文件
 
-On Linux and macOS:
+在 Linux 和 macOS 上：
 
 ```bash
 cp client_config.toml.simple client_config.toml
@@ -467,7 +467,7 @@ cp server_config.toml.simple server_config.toml
 cp client_resolvers.simple client_resolvers.txt
 ```
 
-On Windows:
+在 Windows 上：
 
 ```powershell
 Copy-Item client_config.toml.simple client_config.toml
@@ -475,31 +475,31 @@ Copy-Item server_config.toml.simple server_config.toml
 Copy-Item client_resolvers.simple client_resolvers.txt
 ```
 
-#### Run the server and client
+#### 运行服务器和客户端
 
 ```bash
 ./masterdnsvpn-server -config server_config.toml
 ./masterdnsvpn-client -config client_config.toml
 ```
 
-On Windows:
+在 Windows 上：
 
 ```powershell
 .\masterdnsvpn-server.exe -config server_config.toml
 .\masterdnsvpn-client.exe -config client_config.toml
 ```
 
-#### Command-line parameters
+#### 命令行参数
 
-Both binaries support these arguments:
+两个二进制文件都支持以下参数：
 
-| Parameter | Description |
+| 参数 | 说明 |
 | :--- | :--- |
-| `-config` | Path to the configuration file |
-| `-log` | Optional path to a log file |
-| `-version` | Print version and exit |
+| `-config` | 配置文件的路径 |
+| `-log` | 可选的日志文件路径 |
+| `-version` | 打印版本并退出 |
 
-Example:
+示例：
 
 ```bash
 ./masterdnsvpn-server -config server_config.toml -log server.log
@@ -508,27 +508,27 @@ Example:
 
 ---
 
-# Section 3: Configuration Files and Structure 🛠️
+# 第三节：配置文件和结构 🛠️
 
-## Section 3.1: Important Project Files 📂
+## 第三节.1：重要的项目文件 📂
 
-| File | Purpose |
+| 文件 | 用途 |
 | :--- | :--- |
-| `client_config.toml` | Main client configuration |
-| `server_config.toml` | Main server configuration |
-| `client_resolvers.txt` | Resolver list |
-| `encrypt_key.txt` | Shared server-side encryption key |
-| `client_config.toml.simple` | Full sample client config for the current Go version |
-| `server_config.toml.simple` | Full sample server config for the current Go version |
+| `client_config.toml` | 客户端主配置 |
+| `server_config.toml` | 服务器主配置 |
+| `client_resolvers.txt` | 解析器列表 |
+| `encrypt_key.txt` | 服务器端共享加密密钥 |
+| `client_config.toml.simple` | 当前 Go 版本的完整客户端配置示例 |
+| `server_config.toml.simple` | 当前 Go 版本的完整服务器配置示例 |
 
-Accepted formats in `client_resolvers.txt`:
+`client_resolvers.txt` 中接受的格式：
 
 - `IP`
 - `IP:PORT`
 - `CIDR`
 - `CIDR:PORT`
 
-Example:
+示例：
 
 ```text
 8.8.8.8
@@ -539,301 +539,301 @@ Example:
 
 ---
 
-## Section 3.2: Quick Client Checklist 🚀
+## 第三节.2：快速客户端检查清单 🚀
 
-These items are required on the client:
+客户端上需要以下项目：
 
-1. **`ENCRYPTION_KEY`** must match the content of the server’s `encrypt_key.txt`
-2. **`DOMAINS`** must match the server domain
-3. **`client_resolvers.txt`** must contain working resolvers
-4. For normal use, keep **`PROTOCOL_TYPE = "SOCKS5"`**
-
----
-
-## Section 3.3: Quick Server Checklist ⚙️
-
-These settings are critical on the server:
-
-1. Set **`DOMAIN`** to your delegated tunnel domain
-2. **`DATA_ENCRYPTION_METHOD`** must match the client
-3. **`ENCRYPTION_KEY_FILE`** defines the path to the server key file
-4. If you want direct outbound connections, keep **`USE_EXTERNAL_SOCKS5 = false`**
-5. If you want to chain through an upstream SOCKS5 proxy, set `USE_EXTERNAL_SOCKS5 = true` and fill `FORWARD_IP` / `FORWARD_PORT`
+1. **`ENCRYPTION_KEY`** 必须与服务器 `encrypt_key.txt` 的内容匹配
+2. **`DOMAINS`** 必须与服务器域名匹配
+3. **`client_resolvers.txt`** 必须包含可用的解析器
+4. 正常使用情况下，保持 **`PROTOCOL_TYPE = "SOCKS5"`**
 
 ---
 
-## Section 3.4: 📘 Client Configuration Variables (`client_config.toml`)
+## 第三节.3：快速服务器检查清单 ⚙️
 
-### 3.4.1) 🧭 Tunnel Identity and Security
+服务器上这些设置至关重要：
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `PROTOCOL_TYPE` | `"SOCKS5"` | `"SOCKS5"` or `"TCP"` | Chooses the local service mode exposed by the client.<br>`SOCKS5` is the default and recommended mode for normal use.<br>`TCP` is useful when you want to forward traffic to one fixed remote target instead of giving applications a SOCKS proxy. |
-| `DOMAINS` | `["v.example.com"]` | Non-empty list of strings | These are the tunnel domains used to build DNS requests.<br>Every domain here must belong to the same tunnel you configured on the server.<br>If this list is wrong, the client may build valid DNS queries that the server will simply ignore. |
-| `DATA_ENCRYPTION_METHOD` | `1` | `0..5` | Must match the server.<br>`0=None`, `1=XOR`, `2=ChaCha20`, `3=AES-128-GCM`, `4=AES-192-GCM`, `5=AES-256-GCM`.<br>XOR is lightweight but weaker. AEAD modes are stronger but have more overhead. |
-| `ENCRYPTION_KEY` | `""` | String | Shared secret used by the client codec.<br>This must be exactly the same as the server-side encryption key.<br>If the key is wrong, packets may be parsed as garbage and the tunnel will not work. |
-
-### 3.4.2) 🧦 Local Proxy
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `LISTEN_IP` | `"127.0.0.1"` | Valid IP string | Address where the client listens for local proxy users.<br>Use `127.0.0.1` for normal local-only usage.<br>If some applications prefer IPv6 localhost on your system, using `localhost` can be a better local-only choice.<br>Use `0.0.0.0` only if you want to share the proxy on the network and understand the security implications. |
-| `LISTEN_PORT` | `18000` | `0..65535` | Port for the local proxy.<br>Your applications must use this port to send traffic into the tunnel. |
-| `SOCKS5_AUTH` | `false` | `true/false` | Enables username/password authentication on the local SOCKS5 proxy.<br>If you bind to `0.0.0.0`, enabling this is strongly recommended. |
-| `SOCKS5_USER` | `"master_dns_vpn"` | Up to 255 bytes | Username for the local SOCKS5 proxy.<br>Used only if `SOCKS5_AUTH=true`. |
-| `SOCKS5_PASS` | `"master_dns_vpn"` | Up to 255 bytes | Password for the local SOCKS5 proxy.<br>Used only if `SOCKS5_AUTH=true`. |
-
-### 3.4.3) 📛 Local DNS
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `LOCAL_DNS_ENABLED` | `false` | `true/false` | If enabled, the client exposes a local DNS service and can resolve DNS through the tunnel.<br>This is useful for reducing DNS hijacking or when you want applications to use the tunnel for DNS as well. |
-| `LOCAL_DNS_IP` | `"127.0.0.1"` | Valid IP string | Bind address for the local DNS listener. |
-| `LOCAL_DNS_PORT` | `53` | `0..65535` | Port of the local DNS service.<br>Port `53` is standard, but on some systems it may already be used by another service. |
-| `LOCAL_DNS_CACHE_MAX_RECORDS` | `5000` | If `<1`, fallback applies | Maximum number of local DNS cache records.<br>A larger value reduces repeated DNS lookups but uses more memory. |
-| `LOCAL_DNS_CACHE_TTL_SECONDS` | `28800.0` | If `<=0`, fallback applies | How long successful DNS records stay in the local cache. |
-| `LOCAL_DNS_PENDING_TIMEOUT_SECONDS` | `300.0` | If `<=0`, fallback applies | If a local DNS query is in progress, follower queries can wait for it instead of launching another upstream request.<br>This value defines how long they may wait. |
-| `LOCAL_DNS_CACHE_PERSIST_TO_FILE` | `true` | `true/false` | If enabled, the local DNS cache can be written to disk for reuse between runs. |
-| `LOCAL_DNS_CACHE_FLUSH_INTERVAL_SECONDS` | `60.0` | If `<=0`, fallback applies | How often the persisted local DNS cache is flushed to disk. |
-| `DNS_RESPONSE_FRAGMENT_TIMEOUT_SECONDS` | `10.0` | If `<=0`, fallback applies | How long the client waits for missing DNS tunnel response fragments before giving up. |
-
-### 3.4.4) ⚡ Resolver Selection, Duplication, Health, and Failover
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `RESOLVER_BALANCING_STRATEGY` | `2` | `0..8` | Chooses how resolvers are selected.<br>`0/2` = Round Robin, `1` = Random, `3` = Least Loss, `4` = Lowest Latency, `5` = Hybrid Score, `6` = Loss Then Latency, `7` = Least Loss Top Random, `8` = Least Loss Top Round Robin.<br>The hybrid mode uses a weighted combined score. The loss-then-latency mode first shortlists by loss, then prefers lower latency inside that tier, and rotates among near-equal top candidates. The top-random mode picks randomly from the best loss tier so load does not stick to one resolver. The top-round-robin mode cycles through the same top loss tier with deterministic rotation. |
-| `PACKET_DUPLICATION_COUNT` | `2` | clamp to valid range in code | Normal outgoing packet duplication count.<br>Higher values increase traffic cost but improve survivability on weak links. |
-| `SETUP_PACKET_DUPLICATION_COUNT` | `2` | clamp to valid range in code | Similar to `PACKET_DUPLICATION_COUNT`, but used for setup-sensitive packets such as stream creation and other critical control events. |
-| `STREAM_RESOLVER_FAILOVER_RESEND_THRESHOLD` | `2` | If `<1`, fallback applies | If a stream accumulates repeated resend pressure on the same preferred resolver, the client may fail over that stream to another resolver.<br>This threshold controls how quickly that happens. |
-| `STREAM_RESOLVER_FAILOVER_COOLDOWN` | `2.5` | If `<=0`, fallback applies | Minimum delay between two failovers for the same stream.<br>This prevents unstable oscillation between resolvers. |
-| `RECHECK_INACTIVE_SERVERS_ENABLED` | `true` | `true/false` | Enables background rechecks for currently disabled or unhealthy resolvers.<br>If disabled, once a resolver becomes unusable, it will stay disabled until restart or manual rebuild. |
-| `AUTO_DISABLE_TIMEOUT_SERVERS` | `true` | `true/false` | Enables automatic disabling of resolvers that keep timing out and show no successful activity. |
-| `AUTO_DISABLE_TIMEOUT_WINDOW_SECONDS` | `30.0` | If `<=0`, fallback applies | Time window used to decide whether a resolver is timeout-only.<br>If all observations in this window are timeouts, it may be disabled. |
-| `BASE_ENCODE_DATA` | `false` | `true/false` | If enabled, payloads are encoded in a base-safe format before tunneling.<br>This usually reduces payload efficiency, but can help in strict resolver environments. |
-
-### 3.4.5) 🗜️ Compression
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `UPLOAD_COMPRESSION_TYPE` | `0` | `0..3` | `0=OFF`, `1=ZSTD`, `2=LZ4`, `3=ZLIB`.<br>Controls client-side compression for outgoing payloads. |
-| `DOWNLOAD_COMPRESSION_TYPE` | `0` | `0..3` | Compression type expected or preferred for server-to-client payloads. |
-| `COMPRESSION_MIN_SIZE` | `120` | If invalid, fallback applies | Minimum payload size before compression is attempted.<br>Very small packets often grow instead of shrinking, so this avoids pointless compression work. |
-
-### 3.4.6) 🧪 MTU Discovery and Initial Testing
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `MIN_UPLOAD_MTU` | `38` | positive integer | Smallest upload MTU the client accepts during resolver testing. Minimum enforced is the session-init payload size (10). |
-| `MIN_DOWNLOAD_MTU` | `100` | positive integer | Smallest download MTU the client accepts during resolver testing. Minimum enforced is the session-accept payload size (20). |
-| `MAX_UPLOAD_MTU` | `150` | positive integer | Upper bound for upload MTU testing. |
-| `MAX_DOWNLOAD_MTU` | `500` | positive integer | Upper bound for download MTU testing. |
-| `MTU_TEST_RETRIES` | `2` | if invalid, fallback applies | Number of retries for each MTU probe. |
-| `MTU_TEST_TIMEOUT` | `2.0` | if invalid, fallback applies | Timeout for a single MTU probe. |
-| `MTU_TEST_PARALLELISM` | `16` | if invalid, fallback applies | Number of resolvers tested in parallel during MTU scanning.<br>Higher values scan faster but use more CPU/network and may produce more noisy failures. |
-| `SAVE_MTU_SERVERS_TO_FILE` | `false` | `true/false` | If enabled, successful resolver results are written to an output file. |
-| `MTU_SERVERS_FILE_NAME` | `"masterdnsvpn_success_test_{time}.log"` | string | Output file name template for successful MTU-tested resolvers. |
-| `MTU_SERVERS_FILE_FORMAT` | `"{IP} ({DOMAIN}) - UP: {UP_MTU} DOWN: {DOWN-MTU}"` | string | Output format used in the MTU results file. |
-| `MTU_USING_SECTION_SEPARATOR_TEXT` | `""` | string | Optional separator text inserted into the MTU output file. |
-| `MTU_REMOVED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) removed at {TIME} due to {CAUSE}"` | string | Log/output format when a resolver is removed from the valid set. |
-| `MTU_ADDED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) added back at {TIME} (UP {UP_MTU}, DOWN {DOWN_MTU})"` | string | Log/output format when a resolver is restored. |
-| `MTU_REACTIVE_ADDED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) added back at {TIME} after reactive recheck (UP {UP_MTU}, DOWN {DOWN_MTU})"` | string | Log/output format when a resolver is restored by background health checks. |
-
-### 3.4.7) 🧵 Runtime Workers, Queues, and Timers
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `RX_TX_WORKERS` | `4` | if invalid, fallback applies | Number of shared runtime workers used for both UDP tunnel reads and writes. |
-| `TUNNEL_PROCESS_WORKERS` | `6` | if invalid, fallback applies | Number of workers processing tunnel packets after read. |
-| `TUNNEL_PACKET_TIMEOUT_SECONDS` | `10.0` | if invalid, fallback applies | Overall timeout for tunnel packet handling. |
-| `DISPATCHER_IDLE_POLL_INTERVAL_SECONDS` | `0.020` | if invalid, fallback applies | When there is nothing to send, the dispatcher sleeps for this interval before polling again. |
-| `RX_CHANNEL_SIZE` | `4096` | if invalid, fallback applies | Capacity of the incoming tunnel packet channel. |
-| `SOCKS_UDP_ASSOCIATE_READ_TIMEOUT_SECONDS` | `30.0` | if invalid, fallback applies | Read timeout for SOCKS UDP associate mode. |
-| `CLIENT_TERMINAL_STREAM_RETENTION_SECONDS` | `45.0` | if invalid, fallback applies | How long terminal streams remain in client bookkeeping before full cleanup. |
-| `CLIENT_CANCELLED_SETUP_RETENTION_SECONDS` | `120.0` | if invalid, fallback applies | Retention time for setup streams cancelled before completion. |
-| `SESSION_INIT_RETRY_BASE_SECONDS` | `1.0` | if invalid, fallback applies | Base delay for session-init retries. |
-| `SESSION_INIT_RETRY_STEP_SECONDS` | `1.0` | if invalid, fallback applies | Step increment used in the retry schedule. |
-| `SESSION_INIT_RETRY_LINEAR_AFTER` | `5` | if invalid, fallback applies | After this many retries, the retry backoff becomes more linear. |
-| `SESSION_INIT_RETRY_MAX_SECONDS` | `60.0` | if invalid, fallback applies | Maximum retry delay for session initialization. |
-| `SESSION_INIT_BUSY_RETRY_INTERVAL_SECONDS` | `60.0` | if invalid, fallback applies | Retry delay when the server explicitly responds with `SESSION_BUSY`. |
-
-### 3.4.8) 📡 Ping / Keepalive
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `PING_AGGRESSIVE_INTERVAL_SECONDS` | `0.100` | positive number | Fastest ping interval used in the hottest activity state. |
-| `PING_LAZY_INTERVAL_SECONDS` | `0.750` | positive number | Normal operating ping interval. |
-| `PING_COOLDOWN_INTERVAL_SECONDS` | `2.0` | positive number | Ping interval during cooldown. |
-| `PING_COLD_INTERVAL_SECONDS` | `15.0` | positive number | Ping interval when the session is cold/mostly idle. |
-| `PING_WARM_THRESHOLD_SECONDS` | `8.0` | positive number | Threshold after which the session is treated as warm. |
-| `PING_COOL_THRESHOLD_SECONDS` | `20.0` | positive number | Threshold after which the session is treated as cooling down. |
-| `PING_COLD_THRESHOLD_SECONDS` | `30.0` | positive number | Threshold after which the session is treated as cold. |
-
-### 3.4.9) 🔄 ARQ and Packet Packing
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `MAX_PACKETS_PER_BATCH` | `8` | if invalid, fallback applies | Maximum number of control items the client tries to batch in one packet turn. |
-| `ARQ_WINDOW_SIZE` | `600` | valid positive range | ARQ send/receive window size per stream. |
-| `ARQ_INITIAL_RTO_SECONDS` | `1.0` | clamped in code | Initial retransmission timeout for data packets. |
-| `ARQ_MAX_RTO_SECONDS` | `5.0` | clamped in code | Maximum retransmission timeout for data packets. |
-| `ARQ_CONTROL_INITIAL_RTO_SECONDS` | `0.5` | clamped in code | Initial retransmission timeout for control packets. |
-| `ARQ_CONTROL_MAX_RTO_SECONDS` | `3.0` | clamped in code | Maximum retransmission timeout for control packets. |
-| `ARQ_MAX_CONTROL_RETRIES` | `400` | clamped in code | Maximum number of retries for control packets. |
-| `ARQ_INACTIVITY_TIMEOUT_SECONDS` | `1800.0` | clamped in code | Stream inactivity timeout. |
-| `ARQ_DATA_PACKET_TTL_SECONDS` | `2400.0` | clamped in code | TTL for data packets before they are abandoned. |
-| `ARQ_CONTROL_PACKET_TTL_SECONDS` | `1200.0` | clamped in code | TTL for control packets. |
-| `ARQ_MAX_DATA_RETRIES` | `1200` | clamped in code | Maximum retries for data packets. |
-| `ARQ_DATA_NACK_MAX_GAP` | `16` | clamped in code | Maximum gap size for NACK generation when packets arrive out of order. |
-| `ARQ_DATA_NACK_INITIAL_DELAY_SECONDS` | `0.1` | clamped in code | Initial delay before sending a NACK for missing data packets. Controls how eagerly the system requests retransmissions. |
-| `ARQ_DATA_NACK_REPEAT_SECONDS` | `1.0` | clamped in code | Minimum interval before repeating a NACK for the same missing sequence. |
-| `ARQ_TERMINAL_DRAIN_TIMEOUT_SECONDS` | `120.0` | clamped in code | After a stream becomes terminal, how long the client waits for queue drain. |
-| `ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS` | `90.0` | clamped in code | How long the client waits for the final terminal ACK. |
-
-### 3.4.10) 🪵 Logging
-
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
-| :--- | :--- | :--- | :--- |
-| `LOG_LEVEL` | `"INFO"` | usually `DEBUG`, `INFO`, `WARN`, `ERROR` | Controls client log verbosity.<br>`INFO` is usually enough for normal operation.<br>Use `DEBUG` when investigating resolver health, failover, ARQ, or packet paths. |
+1. 将 **`DOMAIN`** 设置为您的委派隧道域名
+2. **`DATA_ENCRYPTION_METHOD`** 必须与客户端匹配
+3. **`ENCRYPTION_KEY_FILE`** 定义服务器密钥文件的路径
+4. 如果您想要直接的出站连接，保持 **`USE_EXTERNAL_SOCKS5 = false`**
+5. 如果您想通过上游 SOCKS5 代理链式连接，设置 `USE_EXTERNAL_SOCKS5 = true` 并填写 `FORWARD_IP` / `FORWARD_PORT`
 
 ---
 
-## Section 3.5: 📖 Server Configuration (`server_config.toml`)
+## 第三节.4：📘 客户端配置变量 (`client_config.toml`)
 
-> ℹ️ Note: the sample server config contains a key named `CONFIG_VERSION`, but the current Go code does not read it into `ServerConfig`. For that reason it is not included in the table below and has no effect on real server behavior.
+### 3.4.1) 🧭 隧道标识和安全
 
-### 3.5.1) 🌐 Tunnel Policy and Protocol Acceptance
-
-| Parameter | Sample Value in `server_config.toml.simple` | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `DOMAIN` | `["v.domain.com"]` | list of strings | Domain or domains that this server treats as belonging to its tunnel.<br>They must match the client `DOMAINS`, otherwise tunnel packets will not be recognized correctly. |
-| `PROTOCOL_TYPE` | `"SOCKS5"` | only `"SOCKS5"` or `"TCP"` | Determines what kind of setup the server accepts for new streams.<br>In `SOCKS5` mode, the server expects `PACKET_SOCKS5_SYN` and takes the target from the client payload.<br>In `TCP` mode, setup happens through `PACKET_STREAM_SYN` and the server connects to `FORWARD_IP:FORWARD_PORT`. |
-| `MIN_VPN_LABEL_LENGTH` | not shown in sample | if `<=0`, fallback to `3` | Minimum tunnel data label length.<br>This helps avoid confusing ordinary DNS queries with tunnel queries.<br>If this parameter is missing from your old README or config, it is worth adding because the code supports it. |
-| `SUPPORTED_UPLOAD_COMPRESSION_TYPES` | `[0, 1, 2, 3]` | valid compression IDs only | Compression modes the server allows clients to request for upload traffic. |
-| `SUPPORTED_DOWNLOAD_COMPRESSION_TYPES` | `[0, 1, 2, 3]` | valid compression IDs only | Same idea for download traffic from server to client. |
+| `PROTOCOL_TYPE` | `"SOCKS5"` | `"SOCKS5"` 或 `"TCP"` | 选择客户端暴露的本地服务模式。<br>`SOCKS5` 是默认和推荐的模式，用于正常使用。<br>`TCP` 在您想要将流量转发到一个固定的远程目标而不是给应用程序提供 SOCKS 代理时很有用。 |
+| `DOMAINS` | `["v.example.com"]` | 非空字符串列表 | 这些是用于构建 DNS 请求的隧道域名。<br>此列表中的每个域名都必须属于您在服务器上配置的同一个隧道。<br>如果此列表错误，客户端可能会构建有效的 DNS 查询，但服务器会直接忽略它们。 |
+| `DATA_ENCRYPTION_METHOD` | `1` | `0..5` | 必须与服务器匹配。<br>`0=无`, `1=XOR`, `2=ChaCha20`, `3=AES-128-GCM`, `4=AES-192-GCM`, `5=AES-256-GCM`。<br>XOR 是轻量级的但较弱。AEAD 模式更强但有更多开销。 |
+| `ENCRYPTION_KEY` | `""` | 字符串 | 客户端编解码器使用的共享密钥。<br>这必须与服务器端加密密钥完全相同。<br>如果密钥错误，数据包可能会被解析为垃圾数据，隧道将无法工作。 |
 
-### 3.5.2) 📥 UDP Listener and Front-Door Capacity
+### 3.4.2) 🧦 本地代理
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `UDP_HOST` | `"0.0.0.0"` | if empty, this value is used | Address where the DNS server binds.<br>`0.0.0.0` means listen on all interfaces. |
-| `UDP_PORT` | `53` | `1..65535` | UDP port used by the server.<br>In most deployments this should remain `53` so resolvers can query it directly. |
-| `UDP_READERS` | `4` | auto-default if `<=0` | Number of goroutines reading directly from the UDP socket.<br>A larger number may help on very busy servers, but beyond a point it only increases context switching. |
-| `DNS_REQUEST_WORKERS` | `8` | auto-default if `<=0` | Number of workers that take requests from the front-door queue and pass them into the session/decode layer. |
-| `MAX_CONCURRENT_REQUESTS` | `16384` | fallback if `<=0` | Capacity of the incoming request queue.<br>If this queue fills up, packets are dropped and the server emits rate-limited overload logs. |
-| `SOCKET_BUFFER_SIZE` | `4194304` | fallback if `<=0` | Operating-system socket buffer size request for the UDP listener.<br>This matters for heavy bursts of incoming traffic. |
-| `MAX_PACKET_SIZE` | `65535` | fallback if `<=0` | Size of the largest packet buffer that the packet pool allocates. |
-| `DROP_LOG_INTERVAL_SECONDS` | `2.0` | fallback if `<=0` | Minimum interval between repeated overload/drop logs, to avoid log spam during pressure. |
+| `LISTEN_IP` | `"127.0.0.1"` | 有效的 IP 字符串 | 客户端监听本地代理用户的地址。<br>正常使用请使用 `127.0.0.1`。<br>如果您的系统上某些应用程序更喜欢 IPv6 本地主机，使用 `localhost` 可能是更好的仅本地选择。<br>只有在您想在网络上共享代理并了解安全影响时，才使用 `0.0.0.0`。 |
+| `LISTEN_PORT` | `18000` | `0..65535` | 本地代理的端口。<br>您的应用程序必须使用此端口将流量发送到隧道中。 |
+| `SOCKS5_AUTH` | `false` | `true/false` | 在本地 SOCKS5 代理上启用用户名/密码认证。<br>如果您绑定到 `0.0.0.0`，强烈建议启用此功能。 |
+| `SOCKS5_USER` | `"master_dns_vpn"` | 最多 255 字节 | 本地 SOCKS5 代理的用户名。<br>仅在 `SOCKS5_AUTH=true` 时使用。 |
+| `SOCKS5_PASS` | `"master_dns_vpn"` | 最多 255 字节 | 本地 SOCKS5 代理的密码。<br>仅在 `SOCKS5_AUTH=true` 时使用。 |
 
-### 3.5.3) 🧠 Deferred Session Runtime
+### 3.4.3) 📛 本地 DNS
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `DEFERRED_SESSION_WORKERS` | `4` | clamped up to `128` | Number of deferred-session workers.<br>These workers handle ordering-sensitive and setup-heavy tasks such as stream setup, SOCKS connect, and some DNS assembly tasks.<br>Too few can slow down stream setup; too many can create unnecessary contention. |
-| `DEFERRED_SESSION_QUEUE_LIMIT` | `4096` | clamped to `256..14336` | Queue capacity for deferred-session work.<br>If it fills up, new setup or deferred tasks may be rejected. |
-| `SESSION_ORPHAN_QUEUE_INITIAL_CAPACITY` | auto | derived internally | Initial orphan/control queue sizing is derived automatically from server worker counts and batching pressure. |
-| `STREAM_QUEUE_INITIAL_CAPACITY` | auto | derived internally | Per-stream queue initial capacity is derived automatically from ARQ window size and packing pressure. |
-| `DNS_FRAGMENT_STORE_CAPACITY` | auto | derived internally | DNS tunnel fragment store capacity is derived automatically from request concurrency and worker count. |
-| `SOCKS5_FRAGMENT_STORE_CAPACITY` | auto | derived internally | SOCKS5 setup fragment store capacity is derived automatically from deferred-session pressure and concurrency. |
+| `LOCAL_DNS_ENABLED` | `false` | `true/false` | 如果启用，客户端会暴露本地 DNS 服务并可以通过隧道解析 DNS。<br>这对于减少 DNS 劫持或当您希望应用程序也使用隧道进行 DNS 时很有用。 |
+| `LOCAL_DNS_IP` | `"127.0.0.1"` | 有效的 IP 字符串 | 本地 DNS 监听器的绑定地址。 |
+| `LOCAL_DNS_PORT` | `53` | `0..65535` | 本地 DNS 服务的端口。<br>端口 `53` 是标准端口，但在某些系统上可能已被其他服务使用。 |
+| `LOCAL_DNS_CACHE_MAX_RECORDS` | `5000` | 如果 `<1`，则应用回退值 | 本地 DNS 缓存记录的最大数量。<br>较大的值减少重复的 DNS 查找但使用更多内存。 |
+| `LOCAL_DNS_CACHE_TTL_SECONDS` | `28800.0` | 如果 `<=0`，则应用回退值 | 成功的 DNS 记录在本地缓存中保留多长时间。 |
+| `LOCAL_DNS_PENDING_TIMEOUT_SECONDS` | `300.0` | 如果 `<=0`，则应用回退值 | 如果本地 DNS 查询正在进行中，跟随查询可以等待它而不是启动另一个上游请求。<br>此值定义它们可以等待多长时间。 |
+| `LOCAL_DNS_CACHE_PERSIST_TO_FILE` | `true` | `true/false` | 如果启用，本地 DNS 缓存可以写入磁盘以便在运行之间重用。 |
+| `LOCAL_DNS_CACHE_FLUSH_INTERVAL_SECONDS` | `60.0` | 如果 `<=0`，则应用回退值 | 持久化的本地 DNS 缓存刷新到磁盘的频率。 |
+| `DNS_RESPONSE_FRAGMENT_TIMEOUT_SECONDS` | `10.0` | 如果 `<=0`，则应用回退值 | 客户端在放弃之前等待缺失的 DNS 隧道响应片段多长时间。 |
 
-### 3.5.4) 🍪 Session / Stream Lifecycle and Invalid Cookie Tracking
+### 3.4.4) ⚡ 解析器选择、重复发送、健康和故障转移
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `INVALID_COOKIE_WINDOW_SECONDS` | `2.0` | fallback if `<=0` | Time window used to count invalid-cookie errors.<br>This helps the server detect broken sessions or clients repeatedly using a wrong cookie. |
-| `INVALID_COOKIE_ERROR_THRESHOLD` | `10` | fallback if `<=0` | If invalid-cookie errors reach this threshold inside the window above, the server responds more aggressively. |
-| `SESSION_TIMEOUT_SECONDS` | `300.0` | fallback if `<=0` | If a session has no activity for this long, the server times it out and cleans it up. |
-| `SESSION_CLEANUP_INTERVAL_SECONDS` | `30.0` | fallback if `<=0` | How often the periodic session cleanup loop runs. |
-| `CLOSED_SESSION_RETENTION_SECONDS` | `600.0` | fallback if `<=0` | How long closed-session metadata is kept so late packets can still be recognized. |
-| `SESSION_INIT_REUSE_TTL_SECONDS` | `600.0` | clamp to `1..86400` seconds | How long session-init signatures are kept for reuse and simple replay protection. |
-| `RECENTLY_CLOSED_STREAM_TTL_SECONDS` | `600.0` | clamp to `1..86400` seconds | How long recently closed streams remain in the “recently closed” table so late SYN packets do not revive them. |
-| `RECENTLY_CLOSED_STREAM_CAP` | `2000` | clamp to `1..1000000` | Maximum number of recently closed stream entries the server keeps. |
-| `TERMINAL_STREAM_RETENTION_SECONDS` | `45.0` | clamp to `1..86400` seconds | How long terminal streams remain before final sweeping. |
+| `RESOLVER_BALANCING_STRATEGY` | `2` | `0..8` | 选择解析器的方式。<br>`0/2` = 轮询, `1` = 随机, `3` = 最少丢包, `4` = 最低延迟, `5` = 混合评分, `6` = 先丢包后延迟, `7` = 最少丢包顶部随机, `8` = 最少丢包顶部轮询。<br>混合模式使用加权组合评分。先丢包后延迟模式首先按丢包筛选，然后在该层级内优先选择较低延迟，并在接近相等的顶级候选者之间轮换。顶部随机模式从最佳丢包层级中随机选择，这样负载不会 stuck 在一个解析器上。顶部轮询模式以确定性轮换方式循环通过相同的最佳丢包层级。 |
+| `PACKET_DUPLICATION_COUNT` | `2` | 在代码中限制到有效范围 | 正常出站数据包重复发送计数。<br>较高的值增加流量成本但提高弱链路上的生存能力。 |
+| `SETUP_PACKET_DUPLICATION_COUNT` | `2` | 在代码中限制到有效范围 | 类似于 `PACKET_DUPLICATION_COUNT`，但用于对设置敏感的数据包，例如流创建和其他关键控制事件。 |
+| `STREAM_RESOLVER_FAILOVER_RESEND_THRESHOLD` | `2` | 如果 `<1`，则应用回退值 | 如果一个流在同一个首选解析器上累积重复的重传压力，客户端可能会将该流故障转移到另一个解析器。<br>此阈值控制这种情况发生的速度。 |
+| `STREAM_RESOLVER_FAILOVER_COOLDOWN` | `2.5` | 如果 `<=0`，则应用回退值 | 同一流的两次故障转移之间的最小延迟。<br>这防止了解析器之间的不稳定振荡。 |
+| `RECHECK_INACTIVE_SERVERS_ENABLED` | `true` | `true/false` | 启用对当前禁用或不健康的解析器的后台重新检查。<br>如果禁用，一旦解析器变得不可用，它将保持禁用状态直到重启或手动重建。 |
+| `AUTO_DISABLE_TIMEOUT_SERVERS` | `true` | `true/false` | 启用对持续超时且没有成功活动的解析器的自动禁用。 |
+| `AUTO_DISABLE_TIMEOUT_WINDOW_SECONDS` | `30.0` | 如果 `<=0`，则应用回退值 | 用于判断解析器是否仅超时的窗口时间。<br>如果此窗口中的所有观察结果都是超时，它可能会被禁用。 |
+| `BASE_ENCODE_DATA` | `false` | `true/false` | 如果启用，负载在隧道传输前以 base-safe 格式编码。<br>这通常会降低负载效率，但在严格的解析器环境中可能有帮助。 |
 
-### 3.5.5) 📛 DNS Tunnel Upstream
+### 3.4.5) 🗜️ 压缩
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `DNS_UPSTREAM_SERVERS` | `["1.1.1.1:53", "1.0.0.1:53"]` | fallback if empty | When the client sends a real DNS request through the tunnel, the server forwards it to these upstream resolvers.<br>This section is only for DNS-over-tunnel, not for the tunnel transport itself. |
-| `DNS_UPSTREAM_TIMEOUT` | `4.0` | fallback if `<=0` | Timeout for each exchange with the real DNS upstream. |
-| `DNS_INFLIGHT_WAIT_TIMEOUT_SECONDS` | `60.0` | clamp to `0.1..120` seconds | If several identical DNS queries arrive at the same time, only one upstream lookup is performed and the rest wait as followers.<br>This value controls how long followers wait for the main lookup result. |
-| `DNS_FRAGMENT_ASSEMBLY_TIMEOUT` | `300.0` | fallback if `<=0` | How long the server waits for all fragments of a tunneled DNS query to arrive. |
-| `DNS_CACHE_MAX_RECORDS` | `50000` | fallback if `<1` | Maximum size of the server’s internal DNS cache for tunneled DNS queries. |
-| `DNS_CACHE_TTL_SECONDS` | `300.0` | fallback if `<=0` | TTL of the server-side internal DNS cache. |
+| `UPLOAD_COMPRESSION_TYPE` | `0` | `0..3` | `0=关闭`, `1=ZSTD`, `2=LZ4`, `3=ZLIB`。<br>控制客户端出站负载的压缩。 |
+| `DOWNLOAD_COMPRESSION_TYPE` | `0` | `0..3` | 服务器到客户端负载的预期或首选压缩类型。 |
+| `COMPRESSION_MIN_SIZE` | `120` | 如果无效，则应用回退值 | 尝试压缩前的最小负载大小。<br>非常小的数据包通常会变大而不是缩小，因此这避免了无意义的压缩工作。 |
 
-### 3.5.6) 🌐 Forwarding and External SOCKS
+### 3.4.6) 🧪 MTU 发现和初始测试
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `SOCKS_CONNECT_TIMEOUT` | `120.0` | fallback if `<=0` | Timeout for the server’s outbound connection to the final target or to an external SOCKS5 server.<br>The sample shows a higher value, but the real code fallback is `8` seconds. |
-| `USE_EXTERNAL_SOCKS5` | `false` | `true/false` | If `true`, the server sends outbound traffic through an external SOCKS5 server instead of connecting directly.<br>This is mainly useful for chaining or hiding server egress. |
-| `SOCKS5_AUTH` | `false` | `true/false` | Whether the external SOCKS5 server requires username/password authentication. |
-| `SOCKS5_USER` | `"admin"` | up to 255 bytes | Username for the external SOCKS5 server. |
-| `SOCKS5_PASS` | `"123456"` | up to 255 bytes | Password for the external SOCKS5 server.<br>If auth is enabled and username/password are invalid, the config becomes invalid. |
-| `FORWARD_IP` | `""` | string | In `TCP` mode, this is the fixed outbound target.<br>In `SOCKS5` mode with `USE_EXTERNAL_SOCKS5=true`, this is the address of the upstream SOCKS5 server itself. |
-| `FORWARD_PORT` | `0` | `0..65535` | Port of the endpoint above.<br>If `USE_EXTERNAL_SOCKS5=true`, this must be a valid non-zero value. |
+| `MIN_UPLOAD_MTU` | `38` | 正整数 | 客户端在解析器测试期间接受的最小上传 MTU。最小强制值为会话初始化负载大小 (10)。 |
+| `MIN_DOWNLOAD_MTU` | `100` | 正整数 | 客户端在解析器测试期间接受的最小下载 MTU。最小强制值为会话接受负载大小 (20)。 |
+| `MAX_UPLOAD_MTU` | `150` | 正整数 | 上传 MTU 测试的上限。 |
+| `MAX_DOWNLOAD_MTU` | `500` | 正整数 | 下载 MTU 测试的上限。 |
+| `MTU_TEST_RETRIES` | `2` | 如果无效，则应用回退值 | 每个 MTU 探测的重试次数。 |
+| `MTU_TEST_TIMEOUT` | `2.0` | 如果无效，则应用回退值 | 单个 MTU 探测的超时时间。 |
+| `MTU_TEST_PARALLELISM` | `16` | 如果无效，则应用回退值 | MTU 扫描期间并行测试的解析器数量。<br>较高的值扫描更快但使用更多 CPU/网络，可能产生更多嘈杂的失败。 |
+| `SAVE_MTU_SERVERS_TO_FILE` | `false` | `true/false` | 如果启用，成功的解析器结果将写入输出文件。 |
+| `MTU_SERVERS_FILE_NAME` | `"masterdnsvpn_success_test_{time}.log"` | 字符串 | 成功 MTU 测试解析器的输出文件名模板。 |
+| `MTU_SERVERS_FILE_FORMAT` | `"{IP} ({DOMAIN}) - UP: {UP_MTU} DOWN: {DOWN-MTU}"` | 字符串 | MTU 结果文件中使用的输出格式。 |
+| `MTU_USING_SECTION_SEPARATOR_TEXT` | `""` | 字符串 | 可选的分隔符文本，插入到 MTU 输出文件中。 |
+| `MTU_REMOVED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) removed at {TIME} due to {CAUSE}"` | 字符串 | 解析器从有效集合中移除时的日志/输出格式。 |
+| `MTU_ADDED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) added back at {TIME} (UP {UP_MTU}, DOWN {DOWN_MTU})"` | 字符串 | 解析器恢复时的日志/输出格式。 |
+| `MTU_REACTIVE_ADDED_SERVER_LOG_FORMAT` | `"Resolver {IP} ({DOMAIN}) added back at {TIME} after reactive recheck (UP {UP_MTU}, DOWN {DOWN_MTU})"` | 字符串 | 解析器通过后台健康检查恢复时的日志/输出格式。 |
 
-### 3.5.7) 🔐 Security
+### 3.4.7) 🧵 运行时工作线程、队列和定时器
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `DATA_ENCRYPTION_METHOD` | `1` | `0..5` | Must match the client.<br>If an invalid value is supplied, the current code normalizes it back to `1`. |
-| `ENCRYPTION_KEY_FILE` | `"encrypt_key.txt"` | relative or absolute path | Path to the server encryption key file.<br>If it is relative, it is resolved relative to the config directory.<br>If it is empty, the fallback is `encrypt_key.txt`. |
+| `RX_TX_WORKERS` | `4` | 如果无效，则应用回退值 | 用于 UDP 隧道读写的工作线程数量。 |
+| `TUNNEL_PROCESS_WORKERS` | `6` | 如果无效，则应用回退值 | 读取后处理隧道数据包的工作线程数量。 |
+| `TUNNEL_PACKET_TIMEOUT_SECONDS` | `10.0` | 如果无效，则应用回退值 | 隧道数据包处理的总体超时时间。 |
+| `DISPATCHER_IDLE_POLL_INTERVAL_SECONDS` | `0.020` | 如果无效，则应用回退值 | 当没有要发送的内容时，调度器在再次轮询前休眠此间隔。 |
+| `RX_CHANNEL_SIZE` | `4096` | 如果无效，则应用回退值 | 入站隧道数据包通道的容量。 |
+| `SOCKS_UDP_ASSOCIATE_READ_TIMEOUT_SECONDS` | `30.0` | 如果无效，则应用回退值 | SOCKS UDP 关联模式的读取超时时间。 |
+| `CLIENT_TERMINAL_STREAM_RETENTION_SECONDS` | `45.0` | 如果无效，则应用回退值 | 终端流在客户端账簿中保留多长时间才进行完全清理。 |
+| `CLIENT_CANCELLED_SETUP_RETENTION_SECONDS` | `120.0` | 如果无效，则应用回退值 | 在设置完成前取消的设置流的保留时间。 |
+| `SESSION_INIT_RETRY_BASE_SECONDS` | `1.0` | 如果无效，则应用回退值 | 会话初始化重试的基础延迟。 |
+| `SESSION_INIT_RETRY_STEP_SECONDS` | `1.0` | 如果无效，则应用回退值 | 重试计划中使用的步进增量。 |
+| `SESSION_INIT_RETRY_LINEAR_AFTER` | `5` | 如果无效，则应用回退值 | 经过这么多次重试后，重试退避变得更线性。 |
+| `SESSION_INIT_RETRY_MAX_SECONDS` | `60.0` | 如果无效，则应用回退值 | 会话初始化的最大重试延迟。 |
+| `SESSION_INIT_BUSY_RETRY_INTERVAL_SECONDS` | `60.0` | 如果无效，则应用回退值 | 当服务器明确以 `SESSION_BUSY` 响应时的重试延迟。 |
 
-### 3.5.8) 🔄 ARQ, Packing, and Control TTLs
+### 3.4.8) 📡 Ping / 保活
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `MAX_PACKETS_PER_BATCH` | `5` | fallback if `<1` | Maximum number of control blocks the server tries to pack into one response.<br>Important note: if the value is invalid, the real code fallback is `20`. |
-| `PACKET_BLOCK_CONTROL_DUPLICATION` | `1` | clamp to `1..16` | How many extra turns the last packed control block should be repeated.<br>`1` effectively means duplication is off.<br>This is useful on lossy links so critical ACK/close data arrives more reliably. |
-| `STREAM_SETUP_ACK_TTL_SECONDS` | `400.0` | clamp to `1..86400` seconds | TTL of ACK packets related to stream setup. |
-| `STREAM_RESULT_PACKET_TTL_SECONDS` | `300.0` | clamp to `1..86400` seconds | TTL of result packets such as connect success/failure that must reach the client. |
-| `STREAM_FAILURE_PACKET_TTL_SECONDS` | `120.0` | clamp to `1..86400` seconds | TTL of failure packets for setup or outbound errors. |
-| `ARQ_WINDOW_SIZE` | `800` | clamp to `1..16384` | ARQ window size per stream on the server. |
-| `ARQ_INITIAL_RTO_SECONDS` | `1` | clamp to `0.05..60` seconds | Initial retransmission timeout for data packets. |
-| `ARQ_MAX_RTO_SECONDS` | `5.0` | clamp to `[ARQ_INITIAL_RTO_SECONDS, 120]` | Maximum retransmission timeout for data packets. |
-| `ARQ_CONTROL_INITIAL_RTO_SECONDS` | `0.5` | clamp to `0.05..60` seconds | Initial retransmission timeout for control packets. |
-| `ARQ_CONTROL_MAX_RTO_SECONDS` | `3.0` | clamp to `[ARQ_CONTROL_INITIAL_RTO_SECONDS, 120]` | Maximum retransmission timeout for control packets. |
-| `ARQ_MAX_CONTROL_RETRIES` | `300` | clamp to `5..5000` | Maximum retries for control packets. |
-| `ARQ_INACTIVITY_TIMEOUT_SECONDS` | `1800.0` | clamp to `30..86400` seconds | Inactivity timeout for streams. |
-| `ARQ_DATA_PACKET_TTL_SECONDS` | `2400.0` | clamp to `30..86400` seconds | TTL for data packets. |
-| `ARQ_CONTROL_PACKET_TTL_SECONDS` | `1200.0` | clamp to `30..86400` seconds | TTL for control packets. |
-| `ARQ_MAX_DATA_RETRIES` | `1200` | clamp to `60..100000` | Maximum retries for data packets. |
-| `ARQ_DATA_NACK_MAX_GAP` | `16` | clamp to `0..255` | If out-of-order packets arrive, this controls how large a missing gap may be reported with NACK. |
-| `ARQ_DATA_NACK_INITIAL_DELAY_SECONDS` | `0.3` | clamped in code | Initial delay before sending a NACK for missing data packets. Controls how eagerly the system requests retransmissions. |
-| `ARQ_DATA_NACK_REPEAT_SECONDS` | `1.0` | clamp to `0.1..30` seconds | For a missing sequence, this defines how soon a repeated NACK may be issued again. |
-| `ARQ_TERMINAL_DRAIN_TIMEOUT_SECONDS` | `120.0` | clamp to `10..3600` seconds | After a stream becomes terminal, how long the server waits for queues to drain. |
-| `ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS` | `90.0` | clamp to `5..3600` seconds | After terminal close, how long the server waits for the final ACK. |
+| `PING_AGGRESSIVE_INTERVAL_SECONDS` | `0.100` | 正数 | 最热活动状态下使用的最快 ping 间隔。 |
+| `PING_LAZY_INTERVAL_SECONDS` | `0.750` | 正数 | 正常运行 ping 间隔。 |
+| `PING_COOLDOWN_INTERVAL_SECONDS` | `2.0` | 正数 | 冷却期间的 ping 间隔。 |
+| `PING_COLD_INTERVAL_SECONDS` | `15.0` | 正数 | 会话冷/大部分空闲时的 ping 间隔。 |
+| `PING_WARM_THRESHOLD_SECONDS` | `8.0` | 正数 | 会话被视为温暖后的阈值。 |
+| `PING_COOL_THRESHOLD_SECONDS` | `20.0` | 正数 | 会话被视为冷却后的阈值。 |
+| `PING_COLD_THRESHOLD_SECONDS` | `30.0` | 正数 | 会话被视为冷后的阈值。 |
 
-### 3.5.9) 🪵 Logging
+### 3.4.9) 🔄 ARQ 和数据包打包
 
-| Parameter | Sample Value | Allowed Values / Real Behavior | Full Explanation |
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
 | :--- | :--- | :--- | :--- |
-| `LOG_LEVEL` | `"INFO"` | usually `DEBUG`, `INFO`, `WARN`, `ERROR` | Server log level.<br>For normal production usage, `INFO` is usually enough.<br>For deep investigation of sessions, deferred workers, or ARQ behavior, temporarily use `DEBUG`. |
+| `MAX_PACKETS_PER_BATCH` | `8` | 如果无效，则应用回退值 | 客户端尝试在一个数据包轮次中批处理的控制项的最大数量。 |
+| `ARQ_WINDOW_SIZE` | `600` | 有效正范围 | 每流的 ARQ 发送/接收窗口大小。 |
+| `ARQ_INITIAL_RTO_SECONDS` | `1.0` | 在代码中限制 | 数据包的初始重传超时。 |
+| `ARQ_MAX_RTO_SECONDS` | `5.0` | 在代码中限制 | 数据包的最大重传超时。 |
+| `ARQ_CONTROL_INITIAL_RTO_SECONDS` | `0.5` | 在代码中限制 | 控制包的初始重传超时。 |
+| `ARQ_CONTROL_MAX_RTO_SECONDS` | `3.0` | 在代码中限制 | 控制包的最大重传超时。 |
+| `ARQ_MAX_CONTROL_RETRIES` | `400` | 在代码中限制 | 控制包的最大重试次数。 |
+| `ARQ_INACTIVITY_TIMEOUT_SECONDS` | `1800.0` | 在代码中限制 | 流不活动超时。 |
+| `ARQ_DATA_PACKET_TTL_SECONDS` | `2400.0` | 在代码中限制 | 数据包被放弃前的 TTL。 |
+| `ARQ_CONTROL_PACKET_TTL_SECONDS` | `1200.0` | 在代码中限制 | 控制包的 TTL。 |
+| `ARQ_MAX_DATA_RETRIES` | `1200` | 在代码中限制 | 数据包的最大重试次数。 |
+| `ARQ_DATA_NACK_MAX_GAP` | `16` | 在代码中限制 | 当数据包乱序到达时，NACK 生成的最大间隙大小。 |
+| `ARQ_DATA_NACK_INITIAL_DELAY_SECONDS` | `0.1` | 在代码中限制 | 发送缺失数据包 NACK 前的初始延迟。控制系统请求重传的急切程度。 |
+| `ARQ_DATA_NACK_REPEAT_SECONDS` | `1.0` | 在代码中限制 | 对同一缺失序列重复 NACK 前的最小间隔。 |
+| `ARQ_TERMINAL_DRAIN_TIMEOUT_SECONDS` | `120.0` | 在代码中限制 | 流变为终端后，客户端等待队列排空的时间。 |
+| `ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS` | `90.0` | 在代码中限制 | 客户端等待最终终端 ACK 的时间。 |
 
-### 3.5.10) Session Policy Sync
+### 3.4.10) 🪵 日志
 
-During `SESSION_INIT`, the server may append a compact policy block to `SESSION_ACCEPT`.
-The client applies these limits immediately before normal runtime starts.
-
-- Server-enforced `max` values reduce the client only when the requested value is higher.
-- Server-enforced `min` values raise the client only when the requested value is lower.
-- MTU limits are enforced on both sides:
-  - The server clamps the accepted session MTU during init.
-  - The client also clamps its local runtime settings after decode.
-- Runtime-derived state such as worker counts, queues, fragment stores, and packed-block sizing is rebuilt from the effective synced values.
-- Legacy servers that still send the old 7-byte `SESSION_ACCEPT` payload remain compatible; policy sync is simply skipped.
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `LOG_LEVEL` | `"INFO"` | 通常 `DEBUG`, `INFO`, `WARN`, `ERROR` | 控制客户端日志详细程度。<br>`INFO` 通常足以满足正常运行。<br>调查解析器健康、故障转移、ARQ 或数据包路径时使用 `DEBUG`。 |
 
 ---
 
-## Section 3.6: 🧪 Testing, Finding, and Scanning Resolvers
+## 第三节.5：📖 服务器配置 (`server_config.toml`)
 
-Finding suitable resolvers is one of the most important parts of any DNS tunnel project. In this project, the client can automatically find healthy resolvers and test their MTU.
-You can use this client feature to discover healthy resolvers, test your own resolvers, or scan resolver ranges.
-Just place all IPs line by line into `client_resolvers.txt`.
+> ℹ️ 注意：示例服务器配置包含一个名为 `CONFIG_VERSION` 的键，但当前的 Go 代码没有将其读入 `ServerConfig`。因此它没有包含在下表中，对实际服务器行为没有影响。
 
-Then back up your current `client_config.toml`, open it with a text editor, and replace the following values with these suggested ones:
+### 3.5.1) 🌐 隧道策略和协议接受
 
-- Lower the MTU ceiling so you find all servers that really behave as DNS servers, and make Min and Max equal to speed up scanning by avoiding automatic binary-search style probing.
+| 参数 | `server_config.toml.simple` 中的示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `DOMAIN` | `["v.domain.com"]` | 字符串列表 | 此服务器视为属于其隧道的域名。<br>它们必须匹配客户端 `DOMAINS`，否则隧道数据包将无法被正确识别。 |
+| `PROTOCOL_TYPE` | `"SOCKS5"` | 仅 `"SOCKS5"` 或 `"TCP"` | 确定服务器接受的新流设置类型。<br>在 `SOCKS5` 模式下，服务器期望 `PACKET_SOCKS5_SYN` 并从客户端负载中获取目标。<br>在 `TCP` 模式下，设置通过 `PACKET_STREAM_SYN` 进行，服务器连接到 `FORWARD_IP:FORWARD_PORT`。 |
+| `MIN_VPN_LABEL_LENGTH` | 未在示例中显示 | 如果 `<=0`，回退到 `3` | 最小隧道数据标签长度。<br>这有助于避免将普通 DNS 查询与隧道查询混淆。<br>如果您的旧 README 或配置中缺少此参数，值得添加它，因为代码支持它。 |
+| `SUPPORTED_UPLOAD_COMPRESSION_TYPES` | `[0, 1, 2, 3]` | 仅有效压缩 ID | 服务器允许客户端请求的上传流量的压缩模式。 |
+| `SUPPORTED_DOWNLOAD_COMPRESSION_TYPES` | `[0, 1, 2, 3]` | 仅有效压缩 ID | 下载流量的相同概念。 |
+
+### 3.5.2) 📥 UDP 监听器和前门容量
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `UDP_HOST` | `"0.0.0.0"` | 如果为空，则使用此值 | DNS 服务器绑定的地址。<br>`0.0.0.0` 表示监听所有接口。 |
+| `UDP_PORT` | `53` | `1..65535` | 服务器使用的 UDP 端口。<br>在大多数部署中，这应该保持为 `53`，以便解析器可以直接查询它。 |
+| `UDP_READERS` | `4` | 如果 `<=0`，则自动默认值 | 直接从 UDP 套接字读取的 goroutine 数量。<br>较大的数量可能有助于非常繁忙的服务器，但超过某个点后只会增加上下文切换。 |
+| `DNS_REQUEST_WORKERS` | `8` | 如果 `<=0`，则自动默认值 | 从前门队列获取请求并将其传递到会话/解码层的工作线程数量。 |
+| `MAX_CONCURRENT_REQUESTS` | `16384` | 如果 `<=0`，则回退 | 入站请求队列的容量。<br>如果此队列已满，数据包将被丢弃，服务器会发出速率受限的过载日志。 |
+| `SOCKET_BUFFER_SIZE` | `4194304` | 如果 `<=0`，则回退 | UDP 监听器请求的操作系统套接字缓冲区大小。<br>这对大量突发入站流量很重要。 |
+| `MAX_PACKET_SIZE` | `65535` | 如果 `<=0`，则回退 | 数据包池分配的最大数据包缓冲区大小。 |
+| `DROP_LOG_INTERVAL_SECONDS` | `2.0` | 如果 `<=0`，则回退 | 重复过载/丢弃日志之间的最小间隔，以避免压力期间的日志垃圾。 |
+
+### 3.5.3) 🧠 延迟会话运行时
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `DEFERRED_SESSION_WORKERS` | `4` | 限制到 `128` | 延迟会话工作线程的数量。<br>这些工作线程处理对顺序敏感和设置繁重的任务，例如流设置、SOCKS 连接和一些 DNS 组装任务。<br>太少会减慢流设置；太多会造成不必要的争用。 |
+| `DEFERRED_SESSION_QUEUE_LIMIT` | `4096` | 限制到 `256..14336` | 延迟会话工作的队列容量。<br>如果它满了，新的设置或延迟任务可能会被拒绝。 |
+| `SESSION_ORPHAN_QUEUE_INITIAL_CAPACITY` | 自动 | 内部派生 | 初始孤儿/控制队列大小根据服务器工作线程数量和批处理压力自动派生。 |
+| `STREAM_QUEUE_INITIAL_CAPACITY` | 自动 | 内部派生 | 每流队列初始容量根据 ARQ 窗口大小和打包压力自动派生。 |
+| `DNS_FRAGMENT_STORE_CAPACITY` | 自动 | 内部派生 | DNS 隧道片段存储容量根据请求并发性和工作线程数量自动派生。 |
+| `SOCKS5_FRAGMENT_STORE_CAPACITY` | 自动 | 内部派生 | SOCKS5 设置片段存储容量根据延迟会话压力和并发性自动派生。 |
+
+### 3.5.4) 🍪 会话 / 流生命周期和无效 Cookie 跟踪
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `INVALID_COOKIE_WINDOW_SECONDS` | `2.0` | 如果 `<=0`，则回退 | 用于计算无效 cookie 错误的时间窗口。<br>这有助于服务器检测损坏的会话或反复使用错误 cookie 的客户端。 |
+| `INVALID_COOKIE_ERROR_THRESHOLD` | `10` | 如果 `<=0`，则回退 | 如果无效 cookie 错误在上述窗口内达到此阈值，服务器会更积极地响应。 |
+| `SESSION_TIMEOUT_SECONDS` | `300.0` | 如果 `<=0`，则回退 | 如果会话这么长时间没有活动，服务器会将其超时并清理。 |
+| `SESSION_CLEANUP_INTERVAL_SECONDS` | `30.0` | 如果 `<=0`，则回退 | 定期会话清理循环运行的频率。 |
+| `CLOSED_SESSION_RETENTION_SECONDS` | `600.0` | 如果 `<=0`，则回退 | 关闭的会话元数据保留多长时间，以便延迟的数据包仍能被识别。 |
+| `SESSION_INIT_REUSE_TTL_SECONDS` | `600.0` | 限制到 `1..86400` 秒 | 会话初始化签名保留多长时间以进行重用和简单的重放保护。 |
+| `RECENTLY_CLOSED_STREAM_TTL_SECONDS` | `600.0` | 限制到 `1..86400` 秒 | 最近关闭的流在"最近关闭"表中保留多长时间，以便延迟的 SYN 数据包不会复活它们。 |
+| `RECENTLY_CLOSED_STREAM_CAP` | `2000` | 限制到 `1..1000000` | 服务器保留的最近关闭流条目的最大数量。 |
+| `TERMINAL_STREAM_RETENTION_SECONDS` | `45.0` | 限制到 `1..86400` 秒 | 终端流在最终清理前保留多长时间。 |
+
+### 3.5.5) 📛 DNS 隧道上游
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `DNS_UPSTREAM_SERVERS` | `["1.1.1.1:53", "1.0.0.1:53"]` | 如果为空，则回退 | 当客户端通过隧道发送真实 DNS 请求时，服务器将其转发到这些上游解析器。<br>此部分仅用于隧道内 DNS，不用于隧道传输本身。 |
+| `DNS_UPSTREAM_TIMEOUT` | `4.0` | 如果 `<=0`，则回退 | 与真实 DNS 上游每次交换的超时时间。 |
+| `DNS_INFLIGHT_WAIT_TIMEOUT_SECONDS` | `60.0` | 限制到 `0.1..120` 秒 | 如果多个相同的 DNS 查询同时到达，只执行一次上游查找，其余的作为跟随者等待。<br>此值控制跟随者等待主查找结果的时间。 |
+| `DNS_FRAGMENT_ASSEMBLY_TIMEOUT` | `300.0` | 如果 `<=0`，则回退 | 服务器等待隧道 DNS 查询的所有片段到达的时间。 |
+| `DNS_CACHE_MAX_RECORDS` | `50000` | 如果 `<1`，则回退 | 服务器内部 DNS 缓存的最大大小，用于隧道 DNS 查询。 |
+| `DNS_CACHE_TTL_SECONDS` | `300.0` | 如果 `<=0`，则回退 | 服务器端内部 DNS 缓存的 TTL。 |
+
+### 3.5.6) 🌐 转发和外部 SOCKS
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `SOCKS_CONNECT_TIMEOUT` | `120.0` | 如果 `<=0`，则回退 | 服务器到最终目标或外部 SOCKS5 服务器的出站连接超时时间。<br>示例显示较高的值，但实际代码回退为 `8` 秒。 |
+| `USE_EXTERNAL_SOCKS5` | `false` | `true/false` | 如果为 `true`，服务器通过外部 SOCKS5 服务器发送出站流量，而不是直接连接。<br>这主要用于链式连接或隐藏服务器出口。 |
+| `SOCKS5_AUTH` | `false` | `true/false` | 外部 SOCKS5 服务器是否需要用户名/密码认证。 |
+| `SOCKS5_USER` | `"admin"` | 最多 255 字节 | 外部 SOCKS5 服务器的用户名。 |
+| `SOCKS5_PASS` | `"123456"` | 最多 255 字节 | 外部 SOCKS5 服务器的密码。<br>如果启用了认证但用户名/密码无效，配置将变为无效。 |
+| `FORWARD_IP` | `""` | 字符串 | 在 `TCP` 模式下，这是固定的出站目标。<br>在 `SOCKS5` 模式下且 `USE_EXTERNAL_SOCKS5=true` 时，这是上游 SOCKS5 服务器本身的地址。 |
+| `FORWARD_PORT` | `0` | `0..65535` | 上述端点的端口。<br>如果 `USE_EXTERNAL_SOCKS5=true`，这必须是有效的非零值。 |
+
+### 3.5.7) 🔐 安全
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `DATA_ENCRYPTION_METHOD` | `1` | `0..5` | 必须与客户端匹配。<br>如果提供了无效值，当前代码会将其标准化回 `1`。 |
+| `ENCRYPTION_KEY_FILE` | `"encrypt_key.txt"` | 相对或绝对路径 | 服务器加密密钥文件的路径。<br>如果是相对路径，则相对于配置目录解析。<br>如果为空，回退为 `encrypt_key.txt`。 |
+
+### 3.5.8) 🔄 ARQ、打包和控制 TTL
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `MAX_PACKETS_PER_BATCH` | `5` | 如果 `<1`，则回退 | 服务器尝试打包到一个响应中的控制块的最大数量。<br>重要说明：如果值无效，实际代码回退为 `20`。 |
+| `PACKET_BLOCK_CONTROL_DUPLICATION` | `1` | 限制到 `1..16` | 最后一个打包控制块应重复多少额外轮次。<br>`1` 实际上意味着重复发送关闭。<br>这在有损链路上很有用，因此关键的 ACK/关闭数据更可靠地到达。 |
+| `STREAM_SETUP_ACK_TTL_SECONDS` | `400.0` | 限制到 `1..86400` 秒 | 与流设置相关的 ACK 数据包的 TTL。 |
+| `STREAM_RESULT_PACKET_TTL_SECONDS` | `300.0` | 限制到 `1..86400` 秒 | 结果数据包（如连接成功/失败）的 TTL，这些数据包必须到达客户端。 |
+| `STREAM_FAILURE_PACKET_TTL_SECONDS` | `120.0` | 限制到 `1..86400` 秒 | 设置或出站错误失败数据包的 TTL。 |
+| `ARQ_WINDOW_SIZE` | `800` | 限制到 `1..16384` | 服务器上每流的 ARQ 窗口大小。 |
+| `ARQ_INITIAL_RTO_SECONDS` | `1` | 限制到 `0.05..60` 秒 | 数据包的初始重传超时。 |
+| `ARQ_MAX_RTO_SECONDS` | `5.0` | 限制到 `[ARQ_INITIAL_RTO_SECONDS, 120]` | 数据包的最大重传超时。 |
+| `ARQ_CONTROL_INITIAL_RTO_SECONDS` | `0.5` | 限制到 `0.05..60` 秒 | 控制包的初始重传超时。 |
+| `ARQ_CONTROL_MAX_RTO_SECONDS` | `3.0` | 限制到 `[ARQ_CONTROL_INITIAL_RTO_SECONDS, 120]` | 控制包的最大重传超时。 |
+| `ARQ_MAX_CONTROL_RETRIES` | `300` | 限制到 `5..5000` | 控制包的最大重试次数。 |
+| `ARQ_INACTIVITY_TIMEOUT_SECONDS` | `1800.0` | 限制到 `30..86400` 秒 | 流的不活动超时。 |
+| `ARQ_DATA_PACKET_TTL_SECONDS` | `2400.0` | 限制到 `30..86400` 秒 | 数据包的 TTL。 |
+| `ARQ_CONTROL_PACKET_TTL_SECONDS` | `1200.0` | 限制到 `30..86400` 秒 | 控制包的 TTL。 |
+| `ARQ_MAX_DATA_RETRIES` | `1200` | 限制到 `60..100000` | 数据包的最大重试次数。 |
+| `ARQ_DATA_NACK_MAX_GAP` | `16` | 限制到 `0..255` | 如果乱序数据包到达，这控制可以用 NACK 报告的最大缺失间隙。 |
+| `ARQ_DATA_NACK_INITIAL_DELAY_SECONDS` | `0.3` | 在代码中限制 | 发送缺失数据包 NACK 前的初始延迟。控制系统请求重传的急切程度。 |
+| `ARQ_DATA_NACK_REPEAT_SECONDS` | `1.0` | 限制到 `0.1..30` 秒 | 对于缺失序列，这定义了多久可以再次发出重复的 NACK。 |
+| `ARQ_TERMINAL_DRAIN_TIMEOUT_SECONDS` | `120.0` | 限制到 `10..3600` 秒 | 流变为终端后，服务器等待队列排空的时间。 |
+| `ARQ_TERMINAL_ACK_WAIT_TIMEOUT_SECONDS` | `90.0` | 限制到 `5..3600` 秒 | 终端关闭后，服务器等待最终 ACK 的时间。 |
+
+### 3.5.9) 🪵 日志
+
+| 参数 | 示例值 | 允许值 / 实际行为 | 完整说明 |
+| :--- | :--- | :--- | :--- |
+| `LOG_LEVEL` | `"INFO"` | 通常 `DEBUG`, `INFO`, `WARN`, `ERROR` | 服务器日志级别。<br>对于正常生产使用，`INFO` 通常足够。<br>对于深入调查会话、延迟工作线程或 ARQ 行为，临时使用 `DEBUG`。 |
+
+### 3.5.10) 会话策略同步
+
+在 `SESSION_INIT` 期间，服务器可能会在 `SESSION_ACCEPT` 中附加一个紧凑的策略块。
+客户端在正常运行时开始之前立即应用这些限制。
+
+- 服务器强制执行的 `max` 值仅在请求值更高时才会降低客户端的值。
+- 服务器强制执行的 `min` 值仅在请求值更低时才会提高客户端的值。
+- MTU 限制在两侧强制执行：
+  - 服务器在初始化期间限制接受的会话 MTU。
+  - 客户端在解码后也限制其本地运行时设置。
+- 运行时派生状态（如工作线程数量、队列、片段存储和打包块大小）从有效同步值重建。
+- 仍然发送旧 7 字节 `SESSION_ACCEPT` 负载的旧版服务器保持兼容；策略同步简单地跳过。
+
+---
+
+## 第三节.6：🧪 测试、查找和扫描解析器
+
+查找合适的解析器是任何 DNS 隧道项目中最重要的部分之一。在此项目中，客户端可以自动查找健康的解析器并测试其 MTU。
+您可以使用此客户端功能来发现健康的解析器、测试您自己的解析器或扫描解析器范围。
+只需将所有 IP 逐行放入 `client_resolvers.txt` 中。
+
+然后备份您当前的 `client_config.toml`，用文本编辑器打开它，并将以下值替换为这些建议值：
+
+- 降低 MTU 上限，以便找到所有真正表现为 DNS 服务器的服务器，并使 Min 和 Max 相等以通过避免自动二分搜索式探测来加速扫描。
 
 ```toml
 MIN_UPLOAD_MTU=30
@@ -842,195 +842,195 @@ MAX_UPLOAD_MTU=30
 MAX_DOWNLOAD_MTU=40
 ```
 
-- Increase the number of parallel resolver checks:
+- 增加并行解析器检查的数量：
 
 ```toml
 MTU_TEST_PARALLELISM = 200
 ```
 
-- Save healthy resolver results into a text file for later review:
+- 将健康的解析器结果保存到文本文件中以供日后查看：
 
 ```toml
 SAVE_MTU_SERVERS_TO_FILE = true
 ```
 
-- Change the output format so only the IP is written, which is easier to reuse:
+- 更改输出格式，使其只写入 IP，这样更容易重用：
 
 ```toml
 MTU_SERVERS_FILE_FORMAT = "{IP}"
 ```
 
-- Reduce retries and timeout to speed up the scan. With these settings you may miss some slightly slower but still healthy resolvers, so increase them if you want more accurate results.
+- 减少重试和超时以加速扫描。使用这些设置可能会错过一些稍慢但仍然健康的解析器，因此如果您想要更准确的结果，请增加它们。
 
 ```toml
 MTU_TEST_RETRIES = 1
 MTU_TEST_TIMEOUT = 1.0
 ```
 
-> ⚠️ **Important note:** You must already have a server running and must place its key and domain into `client_config.toml` before doing this. Otherwise the client cannot perform MTU tests correctly and will likely mark all resolvers invalid.
+> ⚠️ **重要说明：** 您必须已经有一个正在运行的服务器，并且必须将其密钥和域名放入 `client_config.toml` 中才能执行此操作。否则客户端无法正确执行 MTU 测试，很可能会将所有解析器标记为无效。
 
-Now run the program and wait for the tests to finish. After the process completes, close the program. You will find the saved resolver list in a new `.txt` file next to the main file, and you can then use it as your new `client_resolvers.txt`.
+现在运行程序并等待测试完成。进程完成后，关闭程序。您会在主文件旁边的新 `.txt` 文件中找到保存的解析器列表，然后您可以将其用作新的 `client_resolvers.txt`。
 
-After that, return to your previous settings and use the healthy resolvers you discovered for the best performance.
-
----
-
-## Section 3.7: ⚡ Better MTU Understanding and Practical Fast Tuning
-
-This project depends heavily on a suitable MTU. If you set the MTU too high:
-
-- more resolvers fail
-- startup becomes longer
-- fragmentation and loss increase
-
-If you set it too low:
-
-- speed decreases
-- but stability improves
-
-### Practical suggestion
-
-1. Start with the sample config.
-2. Let the client test resolvers.
-3. Review the MTU results and the number of valid resolvers.
-4. If quality is poor, lower `MIN_UPLOAD_MTU` and `MIN_DOWNLOAD_MTU` slightly.
-5. If you want faster startup, narrow the `MIN/MAX` MTU range and bring them closer together.
+之后，返回到您之前的设置并使用您发现的健康解析器以获得最佳性能。
 
 ---
 
-## Section 4: Mobile Usage Guide (Android and iPhone) 📱
+## 第三节.7：⚡ 更好的 MTU 理解和实用快速调优
 
-Since there is currently no official Android or iOS application published directly by us, you can still use the tunnel on mobile with one of these methods. You can also use Android clients built by other developers that are introduced in Section 5.1.
+此项目严重依赖合适的 MTU。如果您将 MTU 设置得太高：
 
-### Method 1: Share the proxy from your computer 📶
+- 更多解析器会失败
+- 启动时间变长
+- 碎片和丢包增加
 
-1. Set `LISTEN_IP` to `0.0.0.0`
-2. Run the client on your computer
-3. Put your phone and computer on the same network
-4. Configure a **SOCKS5** proxy on the phone using the computer IP and `LISTEN_PORT`
+如果您将 MTU 设置得太低：
 
-### Method 2: Run the client on an intermediate server 🏗️
+- 速度降低
+- 但稳定性提高
 
-1. Run the main server on the final destination
-2. Run the client on an intermediate server
-3. Set `LISTEN_IP` to `0.0.0.0`
-4. Connect the phone to the SOCKS5 proxy on that intermediate server
+### 实用建议
 
-### Method 3: Combine it with other panels or services 🛠️
-
-If you already have another panel or service on a server, you can point its outbound path to the local SOCKS5 of the MasterDnsVPN client and use it as the exit path.
-
-### ⚠️ Important Security Notes for Mobile
-
-- If `LISTEN_IP = "0.0.0.0"`, enable SOCKS5 authentication or make sure your network is trusted. Otherwise anyone on that network can use your tunnel. Using username/password on Internet-facing SOCKS5 is strongly recommended.
-- You can also change the default `LISTEN_PORT` so it is less exposed to automated scans.
-- If devices cannot connect, check the system firewall.
+1. 从示例配置开始。
+2. 让客户端测试解析器。
+3. 查看 MTU 结果和有效解析器的数量。
+4. 如果质量差，稍微降低 `MIN_UPLOAD_MTU` 和 `MIN_DOWNLOAD_MTU`。
+5. 如果您想要更快的启动，缩小 `MIN/MAX` MTU 范围并使它们更接近。
 
 ---
 
-## Section 5: Side Notes and Extra Information 🖥️
+## 第四节：移动使用指南 (Android 和 iPhone) 📱
 
-### Section 5.1: Community Projects Related to MasterDnsVPN 🧩
+由于目前我们没有直接发布官方的 Android 或 iOS 应用程序，您仍然可以通过以下方法之一在移动设备上使用隧道。您也可以使用第五节.1 中介绍的其他开发者构建的 Android 客户端。
 
-In this section, we introduce a few projects related to MasterDnsVPN that have been developed by other people. They may be useful for practical use, inspiration, or experimentation. Please note that these projects are independent from MasterDnsVPN itself and may behave differently or include their own additional features and design choices.
+### 方法一：从您的计算机共享代理 📶
 
-If you use these projects or benefit from their ideas, please consider supporting their developers by starring their GitHub repositories. If you encounter issues or have suggestions, it is best to open an issue or, if possible, contribute with a pull request to those projects directly.
+1. 将 `LISTEN_IP` 设置为 `0.0.0.0`
+2. 在您的计算机上运行客户端
+3. 将您的手机和计算机放在同一个网络上
+4. 在手机上配置 **SOCKS5** 代理，使用计算机 IP 和 `LISTEN_PORT`
 
-You can review these related projects here:
+### 方法二：在中间服务器上运行客户端 🏗️
 
-- [MDV HN Edition Android Client](https://github.com/Hidden-Node/MasterDnsVPN-AndroidClient)
-  An Android application built around MasterDnsVPN that allows connecting to MasterDnsVPN servers from a phone. This project is developed independently by Hidden Node.
+1. 在最终目的地运行主服务器
+2. 在中间服务器上运行客户端
+3. 将 `LISTEN_IP` 设置为 `0.0.0.0`
+4. 将手机连接到该中间服务器上的 SOCKS5 代理
 
-- [MasterDnsVPN GG Android Client](https://github.com/RevocGG/MasterDnsVPN-AndroidGG)
-  Another Android client built around MasterDnsVPN. This project is developed independently by RevocGG.
+### 方法三：与其他面板或服务结合使用 🛠️
 
-- [Persian Config Builder for MasterDnsVPN](https://github.com/datacoder-io/MasterDnsVPN-ConfigMaker) - [Web Config Builder](https://datacoder-io.github.io/MasterDnsVPN-ConfigMaker)
-  A tool that helps create MasterDnsVPN configuration files with Persian explanations and a guided interface. This project is developed independently by datacoder-io.
+如果您已经在服务器上有另一个面板或服务，您可以将其出站路径指向 MasterDnsVPN 客户端的本地 SOCKS5，并将其用作出口路径。
 
-- [MasterDnsWeb (Web Management Client)](https://github.com/abolix/MasterDnsWeb)
-  A web-based management client for MasterDnsVPN, designed to make it easy to manage one or multiple instances at the same time. Developed independently by Abolix.
+### ⚠️ 移动设备的重要安全注意事项
+
+- 如果 `LISTEN_IP = "0.0.0.0"`，请启用 SOCKS5 认证或确保您的网络是受信任的。否则网络上的任何人都可以使用您的隧道。对于面向互联网的 SOCKS5，强烈建议使用用户名/密码。
+- 您也可以更改默认的 `LISTEN_PORT`，使其较少暴露于自动扫描。
+- 如果设备无法连接，请检查系统防火墙。
+
+---
+
+## 第五节：附注和额外信息 🖥️
+
+### 第五节.1：与 MasterDnsVPN 相关的社区项目 🧩
+
+在本节中，我们介绍一些由其他人开发的与 MasterDnsVPN 相关的项目。它们可能对实际使用、灵感或实验有用。请注意，这些项目独立于 MasterDnsVPN 本身，可能表现不同或包含它们自己的额外功能和设计选择。
+
+如果您使用这些项目或从它们的想法中受益，请考虑通过给它们的 GitHub 仓库加星来支持它们的开发者。如果您遇到问题或有建议，最好直接在这些项目中打开 issue，或者如果可能的话，直接向这些项目贡献 pull request。
+
+您可以在这里查看这些相关项目：
+
+- [MDV HN Edition Android 客户端](https://github.com/Hidden-Node/MasterDnsVPN-AndroidClient)
+  围绕 MasterDnsVPN 构建的 Android 应用程序，允许从手机连接到 MasterDnsVPN 服务器。此项目由 Hidden Node 独立开发。
+
+- [MasterDnsVPN GG Android 客户端](https://github.com/RevocGG/MasterDnsVPN-AndroidGG)
+  另一个围绕 MasterDnsVPN 构建的 Android 客户端。此项目由 RevocGG 独立开发。
+
+- [MasterDnsVPN 波斯语配置生成器](https://github.com/datacoder-io/MasterDnsVPN-ConfigMaker) - [Web 配置生成器](https://datacoder-io.github.io/MasterDnsVPN-ConfigMaker)
+  一个帮助创建 MasterDnsVPN 配置文件的波斯语说明和引导界面的工具。此项目由 datacoder-io 独立开发。
+
+- [MasterDnsWeb (Web 管理客户端)](https://github.com/abolix/MasterDnsWeb)
+  一个基于 Web 的 MasterDnsVPN 管理客户端，旨在轻松同时管理一个或多个实例。由 Abolix 独立开发。
 
 - [KevinNet DNS](https://github.com/kamalalhagh/kevinnet-dns)
-  A companion tool for MasterDnsVPN that discovers and validates working DNS resolvers, especially for users in Iran. It generates ready-to-use configuration files and performs end-to-end tunnel verification. This project is developed independently by Kevin Haji.
+  一个用于 MasterDnsVPN 的配套工具，用于发现和验证有效的 DNS 解析器，特别是针对伊朗的用户。它生成即用型配置文件并执行端到端隧道验证。此项目由 Kevin Haji 独立开发。
 
 ---
 
-### Section 5.2: Fixing Port 53 Already in Use (Linux Server) 🛑
+### 第五节.2：修复端口 53 已被占用 (Linux 服务器) 🛑
 
-On most Linux distributions, port `53` is already occupied by `systemd-resolved`. If the server does not start:
+在大多数 Linux 发行版上，端口 `53` 已被 `systemd-resolved` 占用。如果服务器无法启动：
 
 ```bash
 sudo nano /etc/systemd/resolved.conf
 ```
 
-Set this value:
+设置此值：
 
 ```text
 DNSStubListener=no
 ```
 
-Then:
+然后：
 
 ```bash
 sudo systemctl restart systemd-resolved
 ```
 
-> ⚠️ **Important warning:** You cannot run multiple DNS tunnel projects at the same time on the same server on port `53`.
+> ⚠️ **重要警告：** 您不能在同一服务器的端口 `53` 上同时运行多个 DNS 隧道项目。
 
 ---
 
-### Section 5.3: Integrate with 3X-UI and use as an Outbound in other panels 🧩
+### 第五节.3：与 3X-UI 集成并在其他面板中用作出站 🧩
 
-You can use the MasterDnsVPN client as a local proxy inside panels such as 3X-UI or any other system that supports local outbound proxies.
-Follow these steps:
+您可以在 3X-UI 或任何其他支持本地出站代理的面板等系统中将 MasterDnsVPN 客户端用作本地代理。
+请按照以下步骤操作：
 
-- Run the MasterDnsVPN client on the same server where your panel is running.
-- In 3X-UI, go to **Inbound** and create a new inbound (VLESS/VMess or any protocol you want).
-- Open **Xray Configs**, then go to the **Outbound** tab.
-- Click **Add Outbound** to create a new outbound.
-- Set **Protocol** to **Socks**.
-- Choose a tag (for example: `MasterDnsVPN-Out`).
-- In **Address**, enter the local IP of the MasterDnsVPN client (usually `127.0.0.1`).
-- In **Port**, enter the `LISTEN_PORT` you set in `client_config.toml` (for example `18000`).
-- If SOCKS authentication is enabled in MasterDnsVPN, enter the same username/password here.
-- Click **Add Outbound** to save it.
-- Go to the **Routing Rules** tab and click **Add Rule**.
-- In **Inbound Tags**, pick the inbound you created.
-- In **Outbound Tags**, select the `MasterDnsVPN-Out` tag.
-- Click **Save** and **Restart Xray**.
+- 在您的面板运行的同一服务器上运行 MasterDnsVPN 客户端。
+- 在 3X-UI 中，转到 **入站** 并创建一个新的入站 (VLESS/VMess 或您想要的任何协议)。
+- 打开 **Xray 配置**，然后转到 **出站** 标签页。
+- 点击 **添加入站** 创建一个新的出站。
+- 将 **协议** 设置为 **Socks**。
+- 选择一个标签 (例如：`MasterDnsVPN-Out`)。
+- 在 **地址** 中，输入 MasterDnsVPN 客户端的本地 IP (通常是 `127.0.0.1`)。
+- 在 **端口** 中，输入您在 `client_config.toml` 中设置的 `LISTEN_PORT` (例如 `18000`)。
+- 如果在 MasterDnsVPN 中启用了 SOCKS 认证，请在此处输入相同的用户名/密码。
+- 点击 **添加入站** 保存它。
+- 转到 **路由规则** 标签页并点击 **添加规则**。
+- 在 **入站标签** 中，选择您创建的入站。
+- 在 **出站标签** 中，选择 `MasterDnsVPN-Out` 标签。
+- 点击 **保存** 并 **重启 Xray**。
 
-Now all traffic for that inbound will go through MasterDnsVPN and exit via your DNS tunnel.
+现在该入站的所有流量都将通过 MasterDnsVPN 并通过您的 DNS 隧道出口。
 
 ---
 
-## Section 6: 🛠️ System Architecture and How It Works
+## 第六节：🛠️ 系统架构和工作原理
 
-**MasterDnsVPN** combines Session Multiplexing, Resolver Balancing, Packet Duplication, a custom ARQ layer, and a Deferred Session Runtime on top of UDP/DNS to avoid the usual limitations of ordinary tunnels.
+**MasterDnsVPN** 在 UDP/DNS 之上结合了会话多路复用、解析器负载均衡、数据包重复发送、自定义 ARQ 层和延迟会话运行时，以避免普通隧道的常见限制。
 
-### Section 6.1: 🌐 High-Level Architecture Diagram
+### 第六节.1：🌐 高级架构图
 
 ```mermaid
 graph TD
-    subgraph Client_Side ["🖥️ User Device (Client)"]
-        App["📱 Applications (Browser, Telegram, etc.)"]
-        Proxy["🧦 Local SOCKS5 / TCP Proxy"]
-        LDNS["📛 Local DNS (Optional)"]
-        ResolverRuntime["⚡ Balancer + Duplication + Resolver Health"]
-        ClientARQ["🔄 ARQ + Session/Stream Runtime"]
+    subgraph Client_Side ["🖥️ 用户设备 (客户端)"]
+        App["📱 应用程序 (浏览器, Telegram 等)"]
+        Proxy["🧦 本地 SOCKS5 / TCP 代理"]
+        LDNS["📛 本地 DNS (可选)"]
+        ResolverRuntime["⚡ 负载均衡器 + 重复发送 + 解析器健康"]
+        ClientARQ["🔄 ARQ + 会话/流运行时"]
     end
 
-    subgraph DNS_Network ["🌐 Public DNS Network"]
-        R1["📡 Resolver 1"]
-        R2["📡 Resolver 2"]
-        RN["📡 Resolver N"]
+    subgraph DNS_Network ["🌐 公共 DNS 网络"]
+        R1["📡 解析器 1"]
+        R2["📡 解析器 2"]
+        RN["📡 解析器 N"]
     end
 
-    subgraph Server_Side ["🖥️ Remote Server"]
-        UDP["📥 UDP Listener + Request Workers"]
-        Sessions["🧠 Session Store + Deferred Workers"]
-        ServerARQ["🔄 Server ARQ + Packed Control Blocks"]
-        DNSUp["📛 DNS Upstream / Cache"]
-        Out["🌐 Direct Dial or External SOCKS5"]
+    subgraph Server_Side ["🖥️ 远程服务器"]
+        UDP["📥 UDP 监听器 + 请求工作线程"]
+        Sessions["🧠 会话存储 + 延迟工作线程"]
+        ServerARQ["🔄 服务器 ARQ + 打包控制块"]
+        DNSUp["📛 DNS 上游 / 缓存"]
+        Out["🌐 直接拨号或外部 SOCKS5"]
     end
 
     App --> Proxy
@@ -1051,56 +1051,56 @@ graph TD
     DNSUp --> UDP
 ```
 
-### Section 6.2: 🔄 Packet Lifecycle and Flow
+### 第六节.2：🔄 数据包生命周期和流程
 
 ```mermaid
 sequenceDiagram
-    participant App as 📱 User App
-    participant Client as 🖥️ Client
-    participant DNS as 📡 Resolvers
-    participant Server as 🖥️ Server
-    participant Target as 🌐 Final Target
+    participant App as 📱 用户应用
+    participant Client as 🖥️ 客户端
+    participant DNS as 📡 解析器
+    participant Server as 🖥️ 服务器
+    participant Target as 🌐 最终目标
 
-    App->>Client: Create SOCKS5 / TCP connection
-    Note over Client: Build Session/Stream<br/>Encrypt, ARQ, choose resolver
-    Client->>DNS: Send DNS query with duplication and balancing
-    DNS->>Server: Deliver query to the server NS
-    Note over Server: Checksum / Cookie / Session lookup<br/>Deferred setup / ARQ / Queueing
-    Server->>Target: Direct dial or external SOCKS5
-    Target-->>Server: Return target response
-    Note over Server: Put data into ARQ<br/>Build ACKs and packed control blocks
-    Server-->>DNS: DNS response
-    DNS-->>Client: DNS reply
-    Note over Client: ARQ reorder / ACK consume / deliver to app
-    Client-->>App: Ordered clean data
+    App->>Client: 创建 SOCKS5 / TCP 连接
+    Note over Client: 构建会话/流<br/>加密, ARQ, 选择解析器
+    Client->>DNS: 发送带重复发送和均衡的 DNS 查询
+    DNS->>Server: 将查询交付给服务器 NS
+    Note over Server: 校验和 / Cookie / 会话查找<br/>延迟设置 / ARQ / 队列
+    Server->>Target: 直接拨号或外部 SOCKS5
+    Target-->>Server: 返回目标响应
+    Note over Server: 将数据放入 ARQ<br/>构建 ACK 和打包控制块
+    Server-->>DNS: DNS 响应
+    DNS-->>Client: DNS 回复
+    Note over Client: ARQ 重排序 / ACK 消费 / 交付给应用
+    Client-->>App: 有序干净数据
 ```
 
-### Section 6.3: 🧠 Core Concepts Used by the System
+### 第六节.3：🧠 系统使用的核心概念
 
-| Concept | Description |
+| 概念 | 说明 |
 | :--- | :--- |
-| **Session** | One overall connection between client and server |
-| **Stream** | One independent logical connection carried inside a session |
-| **Resolver Runtime** | Resolver selection, duplication, health tracking, auto-disable, and recheck |
-| **ARQ** | Ordering, ACK, retransmission, timeout, and terminal handling |
-| **Deferred Session Runtime** | Ordering-sensitive tasks such as setup, DNS query handling, and sensitive packet flows |
-| **Packed Control Blocks** | Multiple small ACK or control packets packed into one block |
-| **Synced MTU** | The shared MTU chosen across the healthy resolver pool |
+| **会话** | 客户端和服务器之间的总体连接 |
+| **流** | 会话内承载的一个独立逻辑连接 |
+| **解析器运行时** | 解析器选择、重复发送、健康跟踪、自动禁用和重新检查 |
+| **ARQ** | 排序、ACK、重传、超时和终端处理 |
+| **延迟会话运行时** | 对顺序敏感的任务，例如设置、DNS 查询处理和敏感数据包流 |
+| **打包控制块** | 将多个小 ACK 或控制包打包到一个块中 |
+| **同步 MTU** | 在健康解析器池中选择的共享 MTU |
 
 ---
 
-## Section 7: ⚙️ Advanced Technical Notes
+## 第七节：⚙️ 高级技术说明
 
-- ⚡ **Direct connect or external SOCKS5:** If `USE_EXTERNAL_SOCKS5 = false`, the server connects directly to the target. If `true`, it chains through an external SOCKS5 proxy. In general usage you usually do not need an external SOCKS5 server, so this can stay disabled.
-- 🧠 **Per-stream resolver failover:** If a stream gets stuck on a weak resolver, its preferred resolver can move to another one.
-- 📦 **Repeated packed control blocks:** The server can repeat the last packed control block for extra turns so important ACK/close packets have a better chance to survive on lossy links.
-- 🔒 **Server-side key generation:** If `encrypt_key.txt` does not exist, the server creates it during startup.
+- ⚡ **直接连接或外部 SOCKS5：** 如果 `USE_EXTERNAL_SOCKS5 = false`，服务器直接连接到目标。如果为 `true`，它通过外部 SOCKS5 代理链式连接。在一般使用中，您通常不需要外部 SOCKS5 服务器，因此这可以保持禁用状态。
+- 🧠 **每流解析器故障转移：** 如果一个流 stuck 在弱解析器上，其首选解析器可以移动到另一个解析器。
+- 📦 **重复的打包控制块：** 服务器可以重复最后一个打包控制块额外的轮次，以便重要的 ACK/关闭数据包在有损链路上有更好的生存机会。
+- 🔒 **服务器端密钥生成：** 如果 `encrypt_key.txt` 不存在，服务器在启动期间创建它。
 
 ---
 
-## 🤝 Contributing
+## 🤝 贡献
 
-We welcome all contributions. If you have an idea, bug report, or performance improvement, please open an Issue or Pull Request.
+我们欢迎所有贡献。如果您有想法、错误报告或性能改进，请打开 Issue 或 Pull Request。
 
 [Issues](https://github.com/masterking32/MasterDnsVPN/issues)
 
@@ -1108,12 +1108,12 @@ We welcome all contributions. If you have an idea, bug report, or performance im
 
 ---
 
-## 📄 License
+## 📄 许可
 
-This project is published under the **MIT** license. For more details, see the `LICENSE` file.
+本项目在 **MIT** 许可下发布。更多详情，请参阅 `LICENSE` 文件。
 
 ---
 
-## 👨‍💻 Developer
+## 👨‍💻 开发者
 
-Developed with ❤️ by: [**MasterkinG32**](https://github.com/masterking32)
+由 ❤️ 开发：[**MasterkinG32**](https://github.com/masterking32)
