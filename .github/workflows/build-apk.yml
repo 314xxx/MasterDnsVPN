@@ -45,8 +45,9 @@ jobs:
           mkdir -p android-app/app/src/main/assets
           cp -r android-ui/dist/* android-app/app/src/main/assets/
 
-      - name: Create dummy launcher icon
+      - name: Ensure mipmap directory exists
         run: |
+          mkdir -p android-app/app/src/main/res/mipmap-hdpi
           touch android-app/app/src/main/res/mipmap-hdpi/ic_launcher.png
 
       - name: Build APK with Gradle
