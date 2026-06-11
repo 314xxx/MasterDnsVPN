@@ -32,9 +32,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK platform & build-tools
+      - name: Install Android SDK components
         run: |
-          yes | sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          yes | sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platform-tools" 2>&1 || {
+            echo "WARN: build-tools;36.0.0 not available, trying 35.0.1..."
+            yes | sdkmanager --install "platforms;android-36" "build-tools;35.0.1" "platform-tools"
+          }
 
       - name: Install npm dependencies
         working-directory: android-ui
@@ -44,21 +47,53 @@ jobs:
         working-directory: android-ui
         run: npm run build
 
+      - name: Remove stale android directory
+        working-directory: android-ui
+        run: rm -rf android
+
+      - name: Create fresh Android project
+        working-directory: android-ui
+        run: npx cap add android
+
+      - name: Patch missing colors.xml (Capacitor template bug)
+        working-directory: android-ui
+        run: |
+          cat > android/app/src/main/res/values/colors.xml << 'XMLEOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#007AFF</color>
+              <color name="colorPrimaryDark">#005EC4</color>
+              <color name="colorAccent">#007AFF</color>
+          </resources>
+          XMLEOF
+
+      - name: Patch gradle.properties for CI
+        working-directory: android-ui
+        run: |
+          sed -i 's/org.gradle.jvmargs=-Xmx1536m/org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8/' android/gradle.properties
+          sed -i 's/networkTimeout=10000/networkTimeout=60000/' android/gradle/wrapper/gradle-wrapper.properties
+
       - name: Sync Capacitor Android project
         working-directory: android-ui
         run: npx cap sync android
 
-      - name: Verify Android project structure
+      - name: Verify project structure before build
         working-directory: android-ui/android
         run: |
           echo "=== Java version ==="
           java -version 2>&1
+          echo "=== Resource files ==="
+          find app/src/main/res/values -type f -exec echo "  {}" \;
+          echo "=== Capacitor module ==="
+          test -f ../node_modules/@capacitor/android/capacitor/build.gradle && echo "OK: capacitor-android build.gradle exists" || echo "ERROR: missing capacitor-android"
+          echo "=== Cordova plugins module ==="
+          test -f capacitor-cordova-android-plugins/build.gradle && echo "OK: cordova plugins build.gradle exists" || echo "ERROR: missing cordova plugins"
+          echo "=== colors.xml ==="
+          cat app/src/main/res/values/colors.xml
+          echo "=== gradle.properties ==="
+          cat gradle.properties
           echo "=== Gradle wrapper ==="
           cat gradle/wrapper/gradle-wrapper.properties
-          echo "=== Resource files ==="
-          find app/src/main/res/values -type f
-          echo "=== Capacitor module ==="
-          ls -la ../node_modules/@capacitor/android/capacitor/build.gradle
 
       - name: Build debug APK
         working-directory: android-ui/android
@@ -66,17 +101,16 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
-      - name: Verify APK exists
+      - name: Verify APK output
         working-directory: android-ui/android
         run: |
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          if [ ! -f "$APK_PATH" ]; then
-            echo "ERROR: APK not found at $APK_PATH"
-            echo "=== Build outputs ==="
-            find app/build/outputs -type f 2>/dev/null || true
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: APK not found!"
+            find app/build -type f 2>/dev/null || true
             exit 1
           fi
-          echo "APK built successfully: $(ls -lh $APK_PATH)"
+          echo "APK built: $(ls -lh $APK)"
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2
