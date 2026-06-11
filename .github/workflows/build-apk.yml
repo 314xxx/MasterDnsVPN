@@ -40,24 +40,18 @@ jobs:
         working-directory: android-ui
         run: npm run build
 
-      - name: Copy assets to Android project
-        run: |
-          mkdir -p android-app/app/src/main/assets
-          cp -r android-ui/dist/* android-app/app/src/main/assets/
+      - name: Sync to Android project
+        working-directory: android-ui
+        run: npx cap sync android
 
-      - name: Ensure mipmap directory exists
-        run: |
-          mkdir -p android-app/app/src/main/res/mipmap-hdpi
-          touch android-app/app/src/main/res/mipmap-hdpi/ic_launcher.png
-
-      - name: Build APK with Gradle
-        working-directory: android-app
-        run: ./gradlew assembleRelease
+      - name: Build APK
+        working-directory: android-ui/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: android-app/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: android-ui/android/app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
