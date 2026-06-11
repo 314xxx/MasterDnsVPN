@@ -34,10 +34,9 @@ jobs:
 
       - name: Install Android SDK components
         run: |
-          yes | sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "platform-tools" 2>&1 || {
-            echo "WARN: build-tools;36.0.0 not available, trying 35.0.1..."
-            yes | sdkmanager --install "platforms;android-36" "build-tools;35.0.1" "platform-tools"
-          }
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          yes | sdkmanager --install "platforms;android-35" "build-tools;35.0.1" "platform-tools" > /dev/null 2>&1
+          echo "SDK components installed"
 
       - name: Install npm dependencies
         working-directory: android-ui
@@ -47,53 +46,58 @@ jobs:
         working-directory: android-ui
         run: npm run build
 
-      - name: Remove stale android directory
+      - name: Sync Capacitor (generates missing android files)
         working-directory: android-ui
-        run: rm -rf android
+        run: npx cap sync android
 
-      - name: Create fresh Android project
-        working-directory: android-ui
-        run: npx cap add android
-
-      - name: Patch missing colors.xml (Capacitor template bug)
+      - name: Ensure colors.xml exists (Capacitor template bug)
         working-directory: android-ui
         run: |
-          cat > android/app/src/main/res/values/colors.xml << 'XMLEOF'
+          COLORS_FILE="android/app/src/main/res/values/colors.xml"
+          if [ ! -f "$COLORS_FILE" ]; then
+            echo "Creating missing colors.xml"
+            cat > "$COLORS_FILE" << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
               <color name="colorPrimary">#007AFF</color>
               <color name="colorPrimaryDark">#005EC4</color>
               <color name="colorAccent">#007AFF</color>
           </resources>
-          XMLEOF
+          EOF
+          else
+            echo "colors.xml already exists"
+          fi
 
       - name: Patch gradle.properties for CI
-        working-directory: android-ui
-        run: |
-          sed -i 's/org.gradle.jvmargs=-Xmx1536m/org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8/' android/gradle.properties
-          sed -i 's/networkTimeout=10000/networkTimeout=60000/' android/gradle/wrapper/gradle-wrapper.properties
-
-      - name: Sync Capacitor Android project
-        working-directory: android-ui
-        run: npx cap sync android
-
-      - name: Verify project structure before build
         working-directory: android-ui/android
         run: |
-          echo "=== Java version ==="
+          sed -i 's/org.gradle.jvmargs=-Xmx1536m/org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8/' gradle.properties
+
+      - name: Pre-build diagnostics
+        working-directory: android-ui/android
+        run: |
+          echo "=== Java ==="
           java -version 2>&1
-          echo "=== Resource files ==="
-          find app/src/main/res/values -type f -exec echo "  {}" \;
-          echo "=== Capacitor module ==="
-          test -f ../node_modules/@capacitor/android/capacitor/build.gradle && echo "OK: capacitor-android build.gradle exists" || echo "ERROR: missing capacitor-android"
-          echo "=== Cordova plugins module ==="
-          test -f capacitor-cordova-android-plugins/build.gradle && echo "OK: cordova plugins build.gradle exists" || echo "ERROR: missing cordova plugins"
-          echo "=== colors.xml ==="
-          cat app/src/main/res/values/colors.xml
-          echo "=== gradle.properties ==="
-          cat gradle.properties
-          echo "=== Gradle wrapper ==="
-          cat gradle/wrapper/gradle-wrapper.properties
+          echo "=== Key files ==="
+          for f in \
+            app/build.gradle \
+            build.gradle \
+            settings.gradle \
+            variables.gradle \
+            gradle.properties \
+            gradle/wrapper/gradle-wrapper.properties \
+            capacitor-cordova-android-plugins/build.gradle \
+            app/src/main/res/values/colors.xml \
+            app/src/main/res/values/styles.xml \
+            app/src/main/AndroidManifest.xml \
+            app/src/main/assets/public/index.html \
+            app/src/main/res/xml/config.xml; do
+            if [ -f "$f" ]; then
+              echo "  OK: $f"
+            else
+              echo "  MISSING: $f"
+            fi
+          done
 
       - name: Build debug APK
         working-directory: android-ui/android
@@ -101,13 +105,13 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
-      - name: Verify APK output
+      - name: Verify APK
         working-directory: android-ui/android
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
           if [ ! -f "$APK" ]; then
             echo "ERROR: APK not found!"
-            find app/build -type f 2>/dev/null || true
+            find app/build -name "*.apk" -type f 2>/dev/null || true
             exit 1
           fi
           echo "APK built: $(ls -lh $APK)"
@@ -121,7 +125,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload APK as workflow artifact
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
